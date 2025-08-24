@@ -45,7 +45,7 @@
         <button id="printBtn" class="rounded-xl border px-5 py-3 font-semibold hover:bg-slate-50 transition">인쇄/배포</button>
       </div>
     </div>
-    <p class="text-xs text-slate-500 mt-2">※ 국내 사이트는 CORS 제한이 있어 **프록시 뷰어(r.jina.ai)**로 본문을 텍스트로 수집합니다. 원문 링크도 함께 제공합니다.</p>
+    <p class="text-xs text-slate-500 mt-2">※ 국내 사이트는 CORS 제한이 있어 기본 프록시 <code>https://r.jina.ai/</code>를 사용합니다. 네트워크 정책으로 차단될 경우 아래 프록시 입력창에 다른 프록시를 넣어 사용하세요.</p>
   </section>
 
   <main class="max-w-6xl mx-auto px-4 pb-16">
@@ -74,7 +74,6 @@
       <div id="growthContent" class="bg-white rounded-2xl shadow p-5 text-slate-700 leading-7"></div>
     </section>
 
-    <!-- 단계별 카드 (동적 내용 주입) -->
     <section id="stageCards" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -85,7 +84,6 @@
       </div>
     </section>
 
-    <!-- 세부 특징 카드 (씨앗/뿌리/잎/꽃/피는 시기/열매/수분방법/잎맥/꽃받침/향기) -->
     <section id="detailWrap" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">세부 특징</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -102,9 +100,21 @@
       </div>
     </section>
 
-    <!-- 국내 DB 자동 수집 패널 -->
-    <section id="krSources" class="mt-6 hidden">
-      <h3 class="text-lg font-semibold mb-3">국내 DB 자동 수집</h3>
+    <section class="mt-6">
+      <div class="flex items-center gap-3">
+        <h3 class="text-lg font-semibold">국내 DB 자동 수집 <span class="text-xs text-slate-400 font-normal">(베타)</span></h3>
+        <label class="ml-auto flex items-center gap-2 text-sm text-slate-600">
+          <input id="toggle-kr" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"> 국내 사이트 자동 수집 활성화
+        </label>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span>프록시</span>
+          <input id="proxy-input" class="rounded-lg border px-2 py-1 w-60" placeholder="예: https://r.jina.ai/" value="https://r.jina.ai/">
+          <button id="proxy-test" class="rounded-lg border px-3 py-1 hover:bg-slate-50">테스트</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="krSources" class="mt-3 hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <article class="bg-white rounded-2xl shadow p-5">
           <div class="flex items-center gap-2 mb-2"><img alt="nature" class="w-5 h-5" src="https://www.google.com/s2/favicons?domain=www.nature.go.kr"/><h4 class="font-semibold">국립생물자원관 (nature.go.kr)</h4><a id="link-nature" class="ml-auto text-sm text-green-600 underline" target="_blank">원문</a></div>
@@ -115,7 +125,7 @@
           <ul id="koagi-list" class="list-disc pl-5 text-slate-700 leading-7"></ul>
         </article>
       </div>
-      <p class="text-xs text-slate-500 mt-2">※ 공공 사이트는 페이지 구조/접근 제한으로 일부 항목만 요약될 수 있어요.</p>
+      <p class="text-xs text-slate-500 mt-2">※ 네트워크/기관 보안정책에 따라 프록시 접근이 차단될 수 있습니다. 이 경우에도 원문 링크는 정상 제공됩니다.</p>
     </section>
 
     <section id="galleryWrap" class="mt-6 hidden">
@@ -133,7 +143,6 @@
 
     const sectionMapKo = [ '발아','생장','개화','수분','수정','결실','씨앗','열매','번식','형태','특징' ];
     const sectionMapEn = [ 'Germination','Growth','Flowering','Pollination','Fertilization','Fruit','Seed','Reproduction','Characteristics','Description' ];
-
     const aliasMap = { '해바라기': 'Sunflower','벚나무': 'Prunus serrulata','소나무': 'Pine','장미': 'Rose','튤립': 'Tulip' };
 
     function apiURL(lang, path) { return `https://${lang}.wikipedia.org${path}`; }
@@ -141,7 +150,6 @@
     function setStatus(msg) { statusEl.textContent = msg || ''; }
     function show(el) { el.classList.remove('hidden'); }
     function hide(el) { el.classList.add('hidden'); }
-
     const norm = (s)=> (s||'').toLowerCase().replace(/\s+/g,' ').trim();
 
     function bestSearchHit(list, q){ if(!Array.isArray(list) || !list.length) return null; const lowerQ = q.toLowerCase(); const exact = list.find(h => (h.title||'').toLowerCase() === lowerQ); if (exact) return exact; const contains = list.find(h => (h.title||'').toLowerCase().includes(lowerQ)); if (contains) return contains; return list.sort((a,b)=> (a.title||'').length - (b.title||'').length)[0]; }
@@ -160,9 +168,35 @@
     function stripRefs(html) { return html.replaceAll(/<sup[^>]*class=\"reference\"[\s\S]*?<\/sup>/g, '').replaceAll(/<table[^>]*class=\"infobox[\s\S]*?<\/table>/g, '').replaceAll(/<style[\s\S]*?<\/style>/g, '').replaceAll(/<script[\s\S]*?<\/script>/g, '').replaceAll(/\s\(\s*편집\s*\)/g, ''); }
     function htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return (tmp.textContent||tmp.innerText||'').replace(/\s+/g,' ').trim(); }
 
-    // === 국내 사이트 크롤링: r.jina.ai 프록시 사용 ===
+    // ===== 프록시 유틸 =====
+    function getProxyBase(){
+      const el = document.getElementById('proxy-input');
+      let base = (el?.value || '').trim();
+      if (!base) base = 'https://r.jina.ai/';
+      if (!base.endsWith('/')) base += '/';
+      return base;
+    }
+    async function proxyFetch(urlStr){
+      try{
+        const u = new URL(urlStr);
+        const base = getProxyBase();
+        const proxied = base + encodeURI(u.protocol + '//' + u.host + u.pathname + (u.search||''));
+        const r = await fetch(proxied, { method: 'GET' });
+        if(!r.ok){ console.warn('[KR-PROXY] HTTP', r.status, proxied); return {ok:false, text:''}; }
+        const text = await r.text();
+        return {ok:true, text};
+      }catch(e){ console.error('[KR-PROXY] URL/Fetch error:', e); return {ok:false, text:''}; }
+    }
     async function fetchTextViaProxy(url){
-      try { const r = await fetch(`https://r.jina.ai/http://` + url.replace(/^https?:\/\//,'').replace(/^\/*/,'') ); if(!r.ok) return {ok:false, text:''}; const text = await r.text(); return {ok:true, text}; } catch(e){ return {ok:false, text:''}; }
+      let res = await proxyFetch(url);
+      if(res.ok) return res;
+      try{
+        const u = new URL(url);
+        const swapped = (u.protocol === 'https:') ? url.replace(/^https:/,'http:') : url.replace(/^http:/,'https:');
+        res = await proxyFetch(swapped);
+        if(res.ok) return res;
+      }catch(e){}
+      return {ok:false, text:''};
     }
 
     function extractKRFacts(text){
@@ -172,15 +206,10 @@
       return picked.length? picked : ['(요약 문장 추출이 어려워요. 원문을 참고하세요.)'];
     }
 
-    function buildNatureUrl(nameKo, nameEn){
-      // 범용 검색 페이지 추정 경로 (사이트 구조 변경 시 링크만 제공)
-      return `http://www.nature.go.kr/search/search.do?searchWrd=${encodeURIComponent(nameKo || nameEn || '')}`;
-    }
-    function buildKoagiUrl(nameKo, nameEn){
-      return `https://garden.koagi.or.kr/search?query=${encodeURIComponent(nameKo || nameEn || '')}`;
-    }
+    function buildNatureUrl(nameKo, nameEn){ return `https://www.nature.go.kr/search/search.do?searchWrd=${encodeURIComponent(nameKo || nameEn || '')}`; }
+    function buildKoagiUrl(nameKo, nameEn){ return `https://garden.koagi.or.kr/search?query=${encodeURIComponent(nameKo || nameEn || '')}`; }
 
-    // === 기존 특징 분석(요약) 함수: (이전 버전에서 유지) ===
+    // ===== 특징 분석 =====
     function analyzePlantFeatures(corpus){
       const t = norm(corpus);
       let seed=[], root=[], leaf=[], flower=[], bloom=[], fruit=[], pollination=[], vein=[], sepal=[], scent=[];
@@ -268,7 +297,6 @@
         $('#meta').textContent = `언어: ${usedLang.toUpperCase()} · 문서 ID: ${summary.pageid || '-'} · 분류: ${summary.description || ''}`;
         show($('#summary'));
 
-        // 위키 섹션 수집 → 분석 코퍼스 생성
         const sections = await getSections(summary.title || title, usedLang);
         const picks = pickSectionsByLabels(sections, usedLang);
         const secWrap = $('#sections');
@@ -285,11 +313,9 @@
         }
         const corpus = corpusParts.join(' \n ');
 
-        // 한살이 요약 & 카드
         const growthList = generateElementaryGrowth(corpus);
         $('#growthContent').innerHTML = `<ul class="list-disc pl-5">${growthList}</ul>`; show($('#growthWrap')); show($('#stageCards'));
 
-        // 특징 분석 주입
         const feats = analyzePlantFeatures(corpus);
         const fill = (id, arr, alt)=>{ const seen=new Set(); const uniqArr = arr.filter(x=>{const k=norm(x); if(seen.has(k)) return false; seen.add(k); return true;}); const el = document.getElementById(id); el.innerHTML = (uniqArr.length? uniqArr: [alt]).map(s=>`<li>${s}</li>`).join(''); };
         fill('feat-seed', feats.seed, '씨앗 모양 정보가 적어요. 관찰하며 기록해 보세요.');
@@ -304,31 +330,41 @@
         fill('feat-scent', feats.scent, '향기가 있는지 직접 맡아보며 기록해 보세요.');
         show($('#detailWrap'));
 
-        // 국내 DB 자동 수집 (프록시 텍스트 요약)
-        const natureUrl = buildNatureUrl(displayNameKo || summary.title || title, displayNameEn);
-        const koagiUrl = buildKoagiUrl(displayNameKo || summary.title || title, displayNameEn);
-        $('#link-nature').href = natureUrl; $('#link-koagi').href = koagiUrl;
-        const [nat, kag] = await Promise.all([fetchTextViaProxy(natureUrl), fetchTextViaProxy(koagiUrl)]);
-        const natFacts = nat.ok ? extractKRFacts(nat.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
-        const kagFacts = kag.ok ? extractKRFacts(kag.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
-        $('#nature-list').innerHTML = natFacts.map(s=>`<li>${s}</li>`).join('');
-        $('#koagi-list').innerHTML = kagFacts.map(s=>`<li>${s}</li>`).join('');
-        show($('#krSources'));
+        // 국내 DB: 토글이 켜진 경우만 시도
+        if(document.getElementById('toggle-kr').checked){
+          const natureUrl = buildNatureUrl(displayNameKo || summary.title || title, displayNameEn);
+          const koagiUrl = buildKoagiUrl(displayNameKo || summary.title || title, displayNameEn);
+          $('#link-nature').href = natureUrl; $('#link-koagi').href = koagiUrl;
+          const [nat, kag] = await Promise.all([fetchTextViaProxy(natureUrl), fetchTextViaProxy(koagiUrl)]);
+          const natFacts = nat.ok ? extractKRFacts(nat.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
+          const kagFacts = kag.ok ? extractKRFacts(kag.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
+          $('#nature-list').innerHTML = natFacts.map(s=>`<li>${s}</li>`).join('');
+          $('#koagi-list').innerHTML = kagFacts.map(s=>`<li>${s}</li>`).join('');
+          show($('#krSources'));
+        }
 
-        // 이미지 갤러리
         const media = await getMediaList(summary.title || title, usedLang);
         const images = (media.items || []).filter(x => x.type === 'image' || x?.type === 'mediainfo');
         if (images.length) { $('#gallery').innerHTML = images.slice(0, 16).map(item=>{ const thumb = item?.thumbnail?.source || item?.srcset?.[0]?.src; const src = item?.original?.source || thumb; const caption = item?.title || item?.caption?.text || ''; const credit = item?.artist?.text || item?.credit || ''; return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white"><img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/><div class="p-2 text-xs text-slate-600"><div class="truncate">${caption || '이미지'}</div><div class="text-[10px] text-slate-400 truncate">${credit || ''}</div></div></a>`; }).join(''); show($('#galleryWrap')); }
 
         setStatus('');
-      } catch (e) {
-        console.error(e); setStatus('불러오는 중 문제가 발생했어요. 개발자 도구(Console)에서 오류 메시지를 확인해 주세요.'); showToast('오류가 발생했습니다. 네트워크 또는 CORS 설정을 확인해 주세요.');
-      }
+      } catch (e) { console.error(e); setStatus('불러오는 중 문제가 발생했어요. 개발자 도구(Console)에서 오류 메시지를 확인해 주세요.'); showToast('오류가 발생했습니다. 네트워크 또는 CORS 설정을 확인해 주세요.'); }
     }
+
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+    document.getElementById('proxy-test').addEventListener('click', async ()=>{
+      const base = getProxyBase();
+      const testUrl = base + 'https://example.com/';
+      try{ const r = await fetch(testUrl); if(r.ok){ showToast('프록시 연결 성공'); } else { showToast('프록시 응답 실패: ' + r.status); } }
+      catch(e){ showToast('프록시 연결 불가. 네트워크/방화벽 확인 필요'); }
+    });
+
+    document.getElementById('toggle-kr').addEventListener('change', ()=>{ /* 화면 토글만, 실제 수집은 검색 시 */ });
 
     document.getElementById('searchBtn').addEventListener('click', () => run(document.getElementById('q').value.trim() || '해바라기', document.getElementById('lang').value));
     document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('searchBtn').click(); });
-    document.getElementById('printBtn').addEventListener('click', () => window.print());
+
     window.addEventListener('DOMContentLoaded', () => run('해바라기', 'ko'));
   </script>
 </body>
