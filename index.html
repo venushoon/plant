@@ -3,53 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>식물 한살이 탐구 (Wikipedia + 국내 DB 통합)</title>
+  <title>식물 한살이 탐구 (Wikipedia 전용)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Pretendard', system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif; }
+    body { font-family: 'Pretendard', system-ui, sans-serif; }
     @media print {
       .no-print { display: none !important; }
       .print-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
-      a::after { content: " (링크)"; font-size: 10px; }
     }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50">
+
+  <!-- 상단 헤더 -->
   <header class="bg-white sticky top-0 z-10 border-b">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-green-600">
-        <path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
-      </svg>
-      <div>
-        <h1 class="text-xl font-bold">식물 한살이 탐구 (Wikipedia + 국내 DB)</h1>
-        <p class="text-sm text-slate-500">발아·성장·개화·결실 + 세부 특징 + 국내 DB(자원관/정원식물) 자동 수집</p>
-      </div>
-      <div class="ml-auto text-xs text-slate-400">© Wikipedia/Wikimedia · 국내 공공사이트 원문 링크 표시</div>
+      <h1 class="text-xl font-bold text-green-700">식물 한살이 탐구 (Wikipedia)</h1>
+      <div class="ml-auto text-xs text-slate-400">© Wikipedia/Wikimedia 자료 사용</div>
     </div>
   </header>
 
+  <!-- 검색창 -->
   <section class="max-w-6xl mx-auto px-4 py-4">
-    <div class="bg-white rounded-2xl shadow p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+    <div class="bg-white rounded-2xl shadow p-4 flex flex-col md:flex-row gap-3 items-stretch">
       <div class="flex-1 flex gap-2">
-        <input id="q" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="예: 해바라기, 벚나무, 소나무 ..." />
+        <input id="q" class="w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-green-500" placeholder="예: 해바라기, 벚나무 ..." />
         <select id="lang" class="rounded-xl border px-3 py-3">
-          <option value="ko" selected>한국어(ko)</option>
-          <option value="en">English(en)</option>
+          <option value="ko" selected>한국어</option>
+          <option value="en">English</option>
         </select>
       </div>
-      <div class="flex gap-2">
-        <button id="searchBtn" class="rounded-xl bg-green-600 text-white px-5 py-3 font-semibold hover:bg-green-700 transition">검색</button>
-        <button id="printBtn" class="rounded-xl border px-5 py-3 font-semibold hover:bg-slate-50 transition">인쇄/배포</button>
-      </div>
+      <button id="searchBtn" class="rounded-xl bg-green-600 text-white px-5 py-3 font-semibold">검색</button>
     </div>
-    <p class="text-xs text-slate-500 mt-2">※ 국내 사이트는 CORS 제한이 있어 기본 프록시 <code>https://r.jina.ai/</code>를 사용합니다. 네트워크 정책으로 차단될 경우 아래 프록시 입력창에 다른 프록시를 넣어 사용하세요.</p>
+    <p class="text-xs text-slate-500 mt-2">※ 한국어 문서가 부족할 경우 영어로 자동 보완 검색</p>
   </section>
 
+  <!-- 본문 -->
   <main class="max-w-6xl mx-auto px-4 pb-16">
-    <div id="toast" class="hidden mx-auto max-w-3xl mb-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 px-4 py-3"></div>
 
     <section id="summary" class="hidden bg-white rounded-2xl shadow overflow-hidden">
       <div class="md:flex">
@@ -59,7 +49,7 @@
         <div class="p-6 md:w-2/3">
           <div class="flex items-start gap-2">
             <h2 id="title" class="text-2xl font-bold"></h2>
-            <a id="wikiLink" href="#" target="_blank" class="ml-auto text-green-600 text-sm underline">위키 원문</a>
+            <a id="wikiLink" href="#" target="_blank" class="ml-auto text-green-600 text-sm underline">원문 보기</a>
           </div>
           <p id="extract" class="mt-3 text-slate-700 leading-7"></p>
           <div id="meta" class="mt-3 text-xs text-slate-500"></div>
@@ -70,302 +60,96 @@
     <section id="sections" class="mt-6 grid lg:grid-cols-3 gap-6 print-grid"></section>
 
     <section id="growthWrap" class="mt-6 hidden">
-      <h3 class="text-lg font-semibold mb-3">한살이 과정 요약 (초등 눈높이)</h3>
+      <h3 class="text-lg font-semibold mb-3">한살이 과정 요약</h3>
       <div id="growthContent" class="bg-white rounded-2xl shadow p-5 text-slate-700 leading-7"></div>
     </section>
 
     <section id="stageCards" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌱</div><div class="mt-2 font-semibold">발아</div><p id="stage-germination" class="text-sm text-slate-600 text-center mt-1"></p></div>
-        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌿</div><div class="mt-2 font-semibold">성장</div><p id="stage-growth" class="text-sm text-slate-600 text-center mt-1"></p></div>
-        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌼</div><div class="mt-2 font-semibold">개화</div><p id="stage-flowering" class="text-sm text-slate-600 text-center mt-1"></p></div>
-        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🍎</div><div class="mt-2 font-semibold">결실</div><p id="stage-fruiting" class="text-sm text-slate-600 text-center mt-1"></p></div>
+        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌱</div><p id="stage-germination"></p></div>
+        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌿</div><p id="stage-growth"></p></div>
+        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🌼</div><p id="stage-flowering"></p></div>
+        <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center"><div class="text-4xl">🍎</div><p id="stage-fruiting"></p></div>
       </div>
     </section>
 
     <section id="detailWrap" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">세부 특징</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌰</span><h4 class="font-semibold">씨앗의 생김새</h4></div><ul id="feat-seed" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🫚</span><h4 class="font-semibold">뿌리의 모양</h4></div><ul id="feat-root" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🍃</span><h4 class="font-semibold">잎의 특징</h4></div><ul id="feat-leaf" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌼</span><h4 class="font-semibold">꽃의 특징</h4></div><ul id="feat-flower" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">📅</span><h4 class="font-semibold">피는 시기</h4></div><ul id="feat-bloom" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🍎</span><h4 class="font-semibold">열매의 모양·특징</h4></div><ul id="feat-fruit" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5 md:col-span-3"><div class="flex items-center gap-2"><span class="text-2xl">🪶</span><h4 class="font-semibold">수분 방법(꽃가루받이)</h4></div><ul id="feat-pollination" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌿</span><h4 class="font-semibold">잎맥의 유형</h4></div><ul id="feat-vein" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">💠</span><h4 class="font-semibold">꽃받침 유무</h4></div><ul id="feat-sepal" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌸</span><h4 class="font-semibold">향기 유무</h4></div><ul id="feat-scent" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
-      </div>
-    </section>
-
-    <section class="mt-6">
-      <div class="flex items-center gap-3">
-        <h3 class="text-lg font-semibold">국내 DB 자동 수집 <span class="text-xs text-slate-400 font-normal">(베타)</span></h3>
-        <label class="ml-auto flex items-center gap-2 text-sm text-slate-600">
-          <input id="toggle-kr" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"> 국내 사이트 자동 수집 활성화
-        </label>
-        <div class="flex items-center gap-2 text-xs text-slate-500">
-          <span>프록시</span>
-          <input id="proxy-input" class="rounded-lg border px-2 py-1 w-60" placeholder="예: https://r.jina.ai/" value="https://r.jina.ai/">
-          <button id="proxy-test" class="rounded-lg border px-3 py-1 hover:bg-slate-50">테스트</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="krSources" class="mt-3 hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <article class="bg-white rounded-2xl shadow p-5">
-          <div class="flex items-center gap-2 mb-2"><img alt="nature" class="w-5 h-5" src="https://www.google.com/s2/favicons?domain=www.nature.go.kr"/><h4 class="font-semibold">국립생물자원관 (nature.go.kr)</h4><a id="link-nature" class="ml-auto text-sm text-green-600 underline" target="_blank">원문</a></div>
-          <ul id="nature-list" class="list-disc pl-5 text-slate-700 leading-7"></ul>
-        </article>
-        <article class="bg-white rounded-2xl shadow p-5">
-          <div class="flex items-center gap-2 mb-2"><img alt="koagi" class="w-5 h-5" src="https://www.google.com/s2/favicons?domain=garden.koagi.or.kr"/><h4 class="font-semibold">정원식물정보시스템 (garden.koagi.or.kr)</h4><a id="link-koagi" class="ml-auto text-sm text-green-600 underline" target="_blank">원문</a></div>
-          <ul id="koagi-list" class="list-disc pl-5 text-slate-700 leading-7"></ul>
-        </article>
-      </div>
-      <p class="text-xs text-slate-500 mt-2">※ 네트워크/기관 보안정책에 따라 프록시 접근이 차단될 수 있습니다. 이 경우에도 원문 링크는 정상 제공됩니다.</p>
+      <ul id="features" class="list-disc pl-5 text-slate-700 leading-7"></ul>
     </section>
 
     <section id="galleryWrap" class="mt-6 hidden">
-      <h3 class="text-lg font-semibold mb-3">관련 사진·이미지</h3>
+      <h3 class="text-lg font-semibold mb-3">관련 이미지</h3>
       <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
-      <p class="text-xs text-slate-500 mt-2">이미지를 클릭하면 원본과 라이선스 정보를 볼 수 있습니다.</p>
     </section>
 
     <div id="status" class="mt-8 text-center text-slate-500"></div>
   </main>
 
   <script>
-    const $ = (sel) => document.querySelector(sel);
-    const statusEl = $('#status');
+    const $ = (s)=>document.querySelector(s);
 
-    const sectionMapKo = [ '발아','생장','개화','수분','수정','결실','씨앗','열매','번식','형태','특징' ];
-    const sectionMapEn = [ 'Germination','Growth','Flowering','Pollination','Fertilization','Fruit','Seed','Reproduction','Characteristics','Description' ];
-    const aliasMap = { '해바라기': 'Sunflower','벚나무': 'Prunus serrulata','소나무': 'Pine','장미': 'Rose','튤립': 'Tulip' };
-
-    function apiURL(lang, path) { return `https://${lang}.wikipedia.org${path}`; }
-    function showToast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 3000); }
-    function setStatus(msg) { statusEl.textContent = msg || ''; }
-    function show(el) { el.classList.remove('hidden'); }
-    function hide(el) { el.classList.add('hidden'); }
-    const norm = (s)=> (s||'').toLowerCase().replace(/\s+/g,' ').trim();
-
-    function bestSearchHit(list, q){ if(!Array.isArray(list) || !list.length) return null; const lowerQ = q.toLowerCase(); const exact = list.find(h => (h.title||'').toLowerCase() === lowerQ); if (exact) return exact; const contains = list.find(h => (h.title||'').toLowerCase().includes(lowerQ)); if (contains) return contains; return list.sort((a,b)=> (a.title||'').length - (b.title||'').length)[0]; }
-
-    async function searchTitleRaw(query, lang){ const url = apiURL(lang, `/w/api.php?action=query&list=search&srnamespace=0&srsearch=${encodeURIComponent(query)}&format=json&origin=*`); const r = await fetch(url); if(!r.ok) throw new Error('검색 실패'); return (await r.json())?.query?.search || []; }
-
-    async function searchTitle(query, lang){ let hits = await searchTitleRaw(query, lang); let pick = bestSearchHit(hits, query); if (pick) return pick.title; if (lang==='ko' && aliasMap[query]){ hits = await searchTitleRaw(aliasMap[query], 'en'); pick = bestSearchHit(hits, aliasMap[query]); if (pick) return { title: pick.title, lang: 'en' }; } if (lang==='ko'){ hits = await searchTitleRaw(query, 'en'); pick = bestSearchHit(hits, query); if (pick) return { title: pick.title, lang: 'en' }; } return null; }
-
-    async function getSummary(title, lang) { const url = apiURL(lang, `/api/rest_v1/page/summary/${encodeURIComponent(title)}`); const r = await fetch(url); if (!r.ok) throw new Error('요약 불러오기 실패'); return r.json(); }
-    async function getSections(title, lang) { const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=sections&format=json&origin=*`); const r = await fetch(url); const j = await r.json(); return j?.parse?.sections || []; }
-    async function getSectionHTML(title, index, lang) { const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&section=${index}&format=json&origin=*`); const r = await fetch(url); const j = await r.json(); return j?.parse?.text?.['*'] || ''; }
-    async function getMediaList(title, lang) { const url = apiURL(lang, `/api/rest_v1/page/media-list/${encodeURIComponent(title)}`); const r = await fetch(url); if (!r.ok) return { items: [] }; return r.json(); }
-
-    function pickSectionsByLabels(sections, lang) { const labels = (lang === 'ko') ? sectionMapKo : sectionMapEn; const wanted = []; for (const s of sections) { const name = s?.line || ''; if (labels.some(l => name.toLowerCase().includes(l.toLowerCase()))) wanted.push({ index: s.index, name }); } const seen = new Set(); return wanted.filter(w => { const key = w.name.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 8); }
-
-    function stripRefs(html) { return html.replaceAll(/<sup[^>]*class=\"reference\"[\s\S]*?<\/sup>/g, '').replaceAll(/<table[^>]*class=\"infobox[\s\S]*?<\/table>/g, '').replaceAll(/<style[\s\S]*?<\/style>/g, '').replaceAll(/<script[\s\S]*?<\/script>/g, '').replaceAll(/\s\(\s*편집\s*\)/g, ''); }
-    function htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return (tmp.textContent||tmp.innerText||'').replace(/\s+/g,' ').trim(); }
-
-    // ===== 프록시 유틸 =====
-    function getProxyBase(){
-      const el = document.getElementById('proxy-input');
-      let base = (el?.value || '').trim();
-      if (!base) base = 'https://r.jina.ai/';
-      if (!base.endsWith('/')) base += '/';
-      return base;
+    async function searchTitle(query, lang){
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`;
+      const r = await fetch(url); const j = await r.json();
+      return j?.query?.search?.[0]?.title || null;
     }
-    async function proxyFetch(urlStr){
-      try{
-        const u = new URL(urlStr);
-        const base = getProxyBase();
-        const proxied = base + encodeURI(u.protocol + '//' + u.host + u.pathname + (u.search||''));
-        const r = await fetch(proxied, { method: 'GET' });
-        if(!r.ok){ console.warn('[KR-PROXY] HTTP', r.status, proxied); return {ok:false, text:''}; }
-        const text = await r.text();
-        return {ok:true, text};
-      }catch(e){ console.error('[KR-PROXY] URL/Fetch error:', e); return {ok:false, text:''}; }
+    async function getSummary(title, lang){
+      const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const r = await fetch(url); return r.json();
     }
-    async function fetchTextViaProxy(url){
-      let res = await proxyFetch(url);
-      if(res.ok) return res;
-      try{
-        const u = new URL(url);
-        const swapped = (u.protocol === 'https:') ? url.replace(/^https:/,'http:') : url.replace(/^http:/,'https:');
-        res = await proxyFetch(swapped);
-        if(res.ok) return res;
-      }catch(e){}
-      return {ok:false, text:''};
+    async function getSections(title, lang){
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=sections&format=json&origin=*`;
+      const r = await fetch(url); const j = await r.json(); return j?.parse?.sections || [];
+    }
+    async function getSectionHTML(title, index, lang){
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&section=${index}&format=json&origin=*`;
+      const r = await fetch(url); const j = await r.json(); return j?.parse?.text?.['*'] || '';
+    }
+    async function getMediaList(title, lang){
+      const url = `https://${lang}.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(title)}`;
+      const r = await fetch(url); return r.json();
     }
 
-    function extractKRFacts(text){
-      const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
-      const keys = ['개화','꽃','잎','열매','씨','씨앗','분포','서식지','높이','향기','수분','꽃가루','잎맥','가장자리','줄기'];
-      const picked=[]; for(const ln of lines){ if(keys.some(k=>ln.includes(k))){ picked.push(ln); if(picked.length>=12) break; } }
-      return picked.length? picked : ['(요약 문장 추출이 어려워요. 원문을 참고하세요.)'];
-    }
-
-    function buildNatureUrl(nameKo, nameEn){ return `https://www.nature.go.kr/search/search.do?searchWrd=${encodeURIComponent(nameKo || nameEn || '')}`; }
-    function buildKoagiUrl(nameKo, nameEn){ return `https://garden.koagi.or.kr/search?query=${encodeURIComponent(nameKo || nameEn || '')}`; }
-
-    // ===== 특징 분석 =====
-    function analyzePlantFeatures(corpus){
-      const t = norm(corpus);
-      let seed=[], root=[], leaf=[], flower=[], bloom=[], fruit=[], pollination=[], vein=[], sepal=[], scent=[];
-      if(/\b(achene|수과)\b/.test(t)) { seed.push('낱알같은 씨(수과)'); fruit.push('마른 열매(수과)'); }
-      if(/\b(berry|장과)\b/.test(t)) fruit.push('물컹하고 즙이 많은 열매(장과)');
-      if(/\b(drupe|핵과)\b/.test(t)) fruit.push('씨가 딱딱한 핵과');
-      if(/\b(capsule|삭과)\b/.test(t)) fruit.push('익으면 터지는 삭과');
-      if(/\b(samara|날개\s*달린\s*열매)\b/.test(t)) fruit.push('날개 달린 열매(바람으로 이동)');
-      if(/\b(cone|구과|strobilus)\b/.test(t)) fruit.push('솔방울 같은 구과');
-      if(/\b(taproot|원뿌리)\b/.test(t)) root.push('원뿌리(굵은 뿌리 하나가 길게)');
-      if(/\b(fibrous\s*root|수염뿌리)\b/.test(t)) root.push('수염뿌리(가는 뿌리가 여러 갈래)');
-      if(/\b(rhizome|땅속줄기)\b/.test(t)) root.push('땅속줄기로 번식');
-      if(/\b(tuber|덩이줄기)\b/.test(t)) root.push('덩이줄기에 양분 저장');
-      if(/\b(bulb|비늘줄기|알뿌리)\b/.test(t)) root.push('알뿌리(비늘줄기)');
-      if(/\b(opposite|마주나기)\b/.test(t)) leaf.push('잎이 마주나기');
-      if(/\b(alternate|어긋나기)\b/.test(t)) leaf.push('잎이 어긋나기');
-      if(/\b(whorled|돌려나기)\b/.test(t)) leaf.push('잎이 돌려나기');
-      if(/\b(simple\s*leaf|홑잎)\b/.test(t)) leaf.push('홑잎');
-      if(/\b(compound\s*leaf|겹잎)\b/.test(t)) leaf.push('겹잎');
-      if(/\b(needle|바늘잎)\b/.test(t)) leaf.push('바늘 같은 잎');
-      if(/\b(broadleaf|넓은잎)\b/.test(t)) leaf.push('넓은 잎');
-      if(/\b(entire\s*margin|전연)\b/.test(t)) leaf.push('잎 가장자리: 매끈함(전연)');
-      if(/\b(serrate|톱니무늬|톱니)\b/.test(t)) leaf.push('잎 가장자리: 톱니모양');
-      if(/\b(dentate|치아상)\b/.test(t)) leaf.push('잎 가장자리: 치아상(뾰족)');
-      if(/\b(lobed|갈라짐|심열)\b/.test(t)) leaf.push('잎 가장자리: 갈라짐(열편)');
-      if(/\b(linear|선형)\b/.test(t)) leaf.push('잎 모양: 가늘고 긴 선형');
-      if(/\b(ovate|난형)\b/.test(t)) leaf.push('잎 모양: 달걀형(난형)');
-      if(/\b(elliptic|타원형)\b/.test(t)) leaf.push('잎 모양: 타원형');
-      if(/\b(heart\-shaped|cordate|심장형)\b/.test(t)) leaf.push('잎 모양: 심장형');
-      if(/\b(small\s*leaves|작은\s*잎|minute\s*leaves)\b/.test(t)) leaf.push('잎 크기: 작음');
-      if(/\b(large\s*leaves|큰\s*잎)\b/.test(t)) leaf.push('잎 크기: 큼');
-      if(/\b(yellow|노란)\b/.test(t)) flower.push('꽃 색: 노란색');
-      if(/\b(white|하얀|흰)\b/.test(t)) flower.push('꽃 색: 흰색');
-      if(/\b(red|붉|빨간)\b/.test(t)) flower.push('꽃 색: 빨간색');
-      if(/\b(pink|분홍)\b/.test(t)) flower.push('꽃 색: 분홍색');
-      if(/\b(purple|보라)\b/.test(t)) flower.push('꽃 색: 보라색');
-      if(/\b(blue|파란)\b/.test(t)) flower.push('꽃 색: 파란색');
-      if(/\b(orange|주황)\b/.test(t)) flower.push('꽃 색: 주황색');
-      if(/(\b|\s)(5|다섯)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 5장');
-      if(/(\b|\s)(4|네)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 4장');
-      if(/(\b|\s)(6|여섯)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 6장');
-      if(/(\b|\s)(3|세)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 3장');
-      if(/(\b|\s)(8|여덟)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 8장');
-      if(/(\b|\s)(10|열)\s*(petals?|장의?\s*꽃잎)/.test(t)) flower.push('꽃잎 수: 10장 내외');
-      if(/\b(inflorescence|화서|head\b|두상화서|raceme|panicle|spike|umbel)\b/.test(t)) flower.push('꽃이 모여 피는 화서');
-      const monthRange = t.match(/(\d{1,2})\s*[-~–]\s*(\d{1,2})\s*월/); if(monthRange){ bloom.push(`${monthRange[1]}~${monthRange[2]}월`); }
-      if(/\b(봄|spring)\b/.test(t)) bloom.push('봄'); if(/\b(여름|summer)\b/.test(t)) bloom.push('여름'); if(/\b(가을|autumn|fall)\b/.test(t)) bloom.push('가을'); if(/\b(겨울|winter)\b/.test(t)) bloom.push('겨울');
-      if(/\b(insect\s*pollination|곤충\s*수분|벌|나비)\b/.test(t)) pollination.push('곤충 수분(벌·나비 등)');
-      if(/\b(wind\s*pollination|풍매|바람\s*수분)\b/.test(t)) pollination.push('바람(풍매) 수분');
-      if(/\b(bird\s*pollination|조매|새\s*수분|벌새)\b/.test(t)) pollination.push('새(조매) 수분');
-      if(/\b(bat\s*pollination|박쥐)\b/.test(t)) pollination.push('박쥐 수분');
-      if(/\b(self\s*pollination|자가\s*수분)\b/.test(t)) pollination.push('자가 수분');
-      if(/\b(water\s*pollination|수매)\b/.test(t)) pollination.push('물(수매) 수분');
-      if(/pinnate|깃꼴맥/.test(t)) vein.push('깃꼴맥'); if(/palmate|손바닥맥/.test(t)) vein.push('손바닥맥'); if(/parallel|평행맥/.test(t)) vein.push('평행맥');
-      if(/무꽃받침/.test(t)) sepal.push('꽃받침 없음'); else if(/sepal|꽃받침/.test(t)) sepal.push('꽃받침 있음');
-      if(/odorless|무향/.test(t)) scent.push('향기 없음'); else if(/fragrant|향기|향기로운/.test(t)) scent.push('꽃에서 향기가 남');
-      const uniq = (arr)=> Array.from(new Set(arr));
-      return { seed:uniq(seed), root:uniq(root), leaf:uniq(leaf), flower:uniq(flower), bloom:uniq(bloom), fruit:uniq(fruit), pollination:uniq(pollination), vein:uniq(vein), sepal:uniq(sepal), scent:uniq(scent) };
-    }
-
-    function generateElementaryGrowth(corpus){ const t = norm(corpus); const steps=[]; steps.push('① 씨앗이 물을 만나 껍질이 부드러워지면 작은 뿌리와 싹이 나와요.'); if(/\b(taproot|원뿌리)\b/.test(t)) steps.push('② 원뿌리가 길게 자라고 잎이 펼쳐져 햇빛을 받아요.'); else if(/\b(fibrous\s*root|수염뿌리)\b/.test(t)) steps.push('② 수염뿌리가 여러 갈래로 뻗어 단단히 자리 잡아요.'); else steps.push('② 뿌리·줄기·잎이 자라며 광합성을 해요.'); if(/\b(spring|봄)\b/.test(t)) steps.push('③ 봄에 꽃이 피고 꽃가루가 옮겨가요.'); else if(/\b(summer|여름)\b/.test(t)) steps.push('③ 여름에 꽃이 피어 수분이 일어나요.'); else steps.push('③ 꽃이 피면 수분(꽃가루받이)과 수정이 이루어져요.'); steps.push('④ 열매가 맺혀 씨앗이 여물고 퍼질 준비를 해요.'); return steps.map(s=>`<li>${s}</li>`).join(''); }
-
-    function generateClassification(summaryText){ const lifeSpan=[]; const type=[]; const t = norm(summaryText); if(/\b(한해살이|annual)\b/.test(t)) lifeSpan.push('🌼 한해살이 식물 (1년 주기)'); if(/\b(두해살이|biennial)\b/.test(t)) lifeSpan.push('🌿 두해살이 식물 (2년 주기)'); if(/\b(여러해살이|다년생|perennial)\b/.test(t)) lifeSpan.push('🍀 여러해살이 식물 (여러 해)'); if(/\b(나무|수목|tree)\b/.test(t)) type.push('🌳 나무류(목본식물)'); if(/\b(꽃|화초|flower|herbaceous)\b/.test(t)) type.push('🌸 꽃 식물(초본식물)'); const uniq=(a)=>Array.from(new Set(a)); return {lifeSpan: uniq(lifeSpan), type: uniq(type)}; }
-
-    async function run(query, lang) {
+    async function run(query, lang){
       try {
-        setStatus('검색 중…'); showToast('검색을 시작합니다.');
-        hide($('#summary')); hide($('#galleryWrap')); hide($('#growthWrap')); hide($('#stageCards')); hide($('#classification')); hide($('#detailWrap')); hide($('#krSources'));
-        $('#sections').innerHTML = ''; $('#gallery').innerHTML = '';
+        $('#status').textContent = '검색 중...';
+        let title = await searchTitle(query, lang);
+        if (!title && lang==='ko'){ title = await searchTitle(query,'en'); lang='en'; }
+        if (!title){ $('#status').textContent='검색 결과 없음'; return; }
 
-        let title = null; let usedLang = lang;
-        const first = await searchTitle(query, lang);
-        if (typeof first === 'object' && first?.title){ title = first.title; usedLang = first.lang || lang; }
-        else if (typeof first === 'string') { title = first; }
-        if (!title) { setStatus('검색 결과가 없습니다. 다른 검색어나 학명으로 시도하세요.'); showToast('검색 결과가 없습니다. 영어 이름/학명으로 다시 검색해 보세요.'); return; }
+        const summary = await getSummary(title, lang);
+        $('#title').textContent = summary.title;
+        $('#extract').textContent = summary.extract;
+        $('#thumb').src = summary.thumbnail?.source || '';
+        $('#wikiLink').href = summary.content_urls.desktop.page;
+        $('#meta').textContent = `언어: ${lang.toUpperCase()}`;
 
-        const summary = await getSummary(title, usedLang);
-        const displayNameKo = (lang==='ko' ? query : '');
-        const displayNameEn = (usedLang==='en' ? summary.title : '');
+        $('#summary').classList.remove('hidden');
 
-        $('#title').textContent = summary.title || title;
-        $('#extract').textContent = summary.extract || '';
-        $('#thumb').src = summary.thumbnail?.source || 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
-        $('#wikiLink').href = summary.content_urls?.desktop?.page || apiURL(usedLang, `/wiki/${encodeURIComponent(title)}`);
-        $('#meta').textContent = `언어: ${usedLang.toUpperCase()} · 문서 ID: ${summary.pageid || '-'} · 분류: ${summary.description || ''}`;
-        show($('#summary'));
-
-        const sections = await getSections(summary.title || title, usedLang);
-        const picks = pickSectionsByLabels(sections, usedLang);
-        const secWrap = $('#sections');
-        const corpusParts = [summary.extract || ''];
-        if (picks.length) {
-          for (const p of picks) {
-            const html = await getSectionHTML(summary.title || title, p.index, usedLang);
-            const clean = stripRefs(html);
-            const div = document.createElement('div'); div.innerHTML = `<article class="bg-white rounded-2xl shadow p-5"><h4 class="font-semibold mb-2">${p.name}</h4><div class="prose max-w-none">${clean}</div></article>`;
-            div.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
-            secWrap.appendChild(div.firstElementChild);
-            corpusParts.push(htmlToText(clean));
-          }
-        }
-        const corpus = corpusParts.join(' \n ');
-
-        const growthList = generateElementaryGrowth(corpus);
-        $('#growthContent').innerHTML = `<ul class="list-disc pl-5">${growthList}</ul>`; show($('#growthWrap')); show($('#stageCards'));
-
-        const feats = analyzePlantFeatures(corpus);
-        const fill = (id, arr, alt)=>{ const seen=new Set(); const uniqArr = arr.filter(x=>{const k=norm(x); if(seen.has(k)) return false; seen.add(k); return true;}); const el = document.getElementById(id); el.innerHTML = (uniqArr.length? uniqArr: [alt]).map(s=>`<li>${s}</li>`).join(''); };
-        fill('feat-seed', feats.seed, '씨앗 모양 정보가 적어요. 관찰하며 기록해 보세요.');
-        fill('feat-root', feats.root, '원뿌리/수염뿌리인지 살펴보세요.');
-        fill('feat-leaf', feats.leaf, '잎 모양·잎맥·가장자리·크기를 관찰해 보세요.');
-        fill('feat-flower', feats.flower, '꽃 색과 꽃잎 수, 화서를 관찰해 보세요.');
-        fill('feat-bloom', feats.bloom, '피는 달(예: 4~5월)이나 계절 단서를 찾아보세요.');
-        fill('feat-fruit', feats.fruit, '열매가 물러요? 딱딱해요? 날개가 있나요? 기록해 보세요.');
-        fill('feat-pollination', feats.pollination, '곤충·바람·새·자가 등 꽃가루가 어떻게 옮겨가는지 확인해 보세요.');
-        fill('feat-vein', feats.vein, '깃꼴/손바닥/평행맥인지 확인해 보세요.');
-        fill('feat-sepal', feats.sepal, '꽃받침이 있는지 살펴보세요.');
-        fill('feat-scent', feats.scent, '향기가 있는지 직접 맡아보며 기록해 보세요.');
-        show($('#detailWrap'));
-
-        // 국내 DB: 토글이 켜진 경우만 시도
-        if(document.getElementById('toggle-kr').checked){
-          const natureUrl = buildNatureUrl(displayNameKo || summary.title || title, displayNameEn);
-          const koagiUrl = buildKoagiUrl(displayNameKo || summary.title || title, displayNameEn);
-          $('#link-nature').href = natureUrl; $('#link-koagi').href = koagiUrl;
-          const [nat, kag] = await Promise.all([fetchTextViaProxy(natureUrl), fetchTextViaProxy(koagiUrl)]);
-          const natFacts = nat.ok ? extractKRFacts(nat.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
-          const kagFacts = kag.ok ? extractKRFacts(kag.text) : ['(프록시 접근 불가 또는 페이지 없음)'];
-          $('#nature-list').innerHTML = natFacts.map(s=>`<li>${s}</li>`).join('');
-          $('#koagi-list').innerHTML = kagFacts.map(s=>`<li>${s}</li>`).join('');
-          show($('#krSources'));
+        // Sections
+        const secs = await getSections(title, lang);
+        const container = $('#sections'); container.innerHTML='';
+        for(const s of secs.slice(0,3)){
+          const html = await getSectionHTML(title, s.index, lang);
+          const div = document.createElement('div');
+          div.className='bg-white rounded-2xl shadow p-5';
+          div.innerHTML = `<h4>${s.line}</h4><div>${html}</div>`;
+          container.appendChild(div);
         }
 
-        const media = await getMediaList(summary.title || title, usedLang);
-        const images = (media.items || []).filter(x => x.type === 'image' || x?.type === 'mediainfo');
-        if (images.length) { $('#gallery').innerHTML = images.slice(0, 16).map(item=>{ const thumb = item?.thumbnail?.source || item?.srcset?.[0]?.src; const src = item?.original?.source || thumb; const caption = item?.title || item?.caption?.text || ''; const credit = item?.artist?.text || item?.credit || ''; return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white"><img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/><div class="p-2 text-xs text-slate-600"><div class="truncate">${caption || '이미지'}</div><div class="text-[10px] text-slate-400 truncate">${credit || ''}</div></div></a>`; }).join(''); show($('#galleryWrap')); }
+        // Images
+        const media = await getMediaList(title, lang);
+        const imgs = media.items.filter(i=>i.type==='image');
+        if(imgs.length){ $('#gallery').innerHTML=imgs.slice(0,8).map(i=>`<img src=\"${i.thumbnail?.source}\" class='w-full h-40 object-cover'/>`).join(''); $('#galleryWrap').classList.remove('hidden'); }
 
-        setStatus('');
-      } catch (e) { console.error(e); setStatus('불러오는 중 문제가 발생했어요. 개발자 도구(Console)에서 오류 메시지를 확인해 주세요.'); showToast('오류가 발생했습니다. 네트워크 또는 CORS 설정을 확인해 주세요.'); }
+        $('#status').textContent='';
+      } catch(e){ console.error(e); $('#status').textContent='오류 발생'; }
     }
 
-    document.getElementById('printBtn').addEventListener('click', () => window.print());
-
-    document.getElementById('proxy-test').addEventListener('click', async ()=>{
-      const base = getProxyBase();
-      const testUrl = base + 'https://example.com/';
-      try{ const r = await fetch(testUrl); if(r.ok){ showToast('프록시 연결 성공'); } else { showToast('프록시 응답 실패: ' + r.status); } }
-      catch(e){ showToast('프록시 연결 불가. 네트워크/방화벽 확인 필요'); }
-    });
-
-    document.getElementById('toggle-kr').addEventListener('change', ()=>{ /* 화면 토글만, 실제 수집은 검색 시 */ });
-
-    document.getElementById('searchBtn').addEventListener('click', () => run(document.getElementById('q').value.trim() || '해바라기', document.getElementById('lang').value));
-    document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('searchBtn').click(); });
-
-    window.addEventListener('DOMContentLoaded', () => run('해바라기', 'ko'));
+    $('#searchBtn').addEventListener('click',()=>run($('#q').value.trim()||'해바라기',$('#lang').value));
+    window.addEventListener('DOMContentLoaded',()=>run('해바라기','ko'));
   </script>
 </body>
 </html>
