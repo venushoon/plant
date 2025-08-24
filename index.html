@@ -49,6 +49,8 @@
   </section>
 
   <main class="max-w-6xl mx-auto px-4 pb-16">
+    <div id="toast" class="hidden mx-auto max-w-3xl mb-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 px-4 py-3"></div>
+
     <section id="summary" class="hidden bg-white rounded-2xl shadow overflow-hidden">
       <div class="md:flex">
         <div class="md:w-1/3">
@@ -126,16 +128,69 @@
   <script>
     const $ = (sel) => document.querySelector(sel);
     const statusEl = $('#status');
+
+    // ✅ 한/영 섹션 키워드
     const sectionMapKo = [ '발아','생장','개화','수분','수정','결실','씨앗','열매','번식','형태','특징' ];
     const sectionMapEn = [ 'Germination','Growth','Flowering','Pollination','Fertilization','Fruit','Seed','Reproduction','Characteristics','Description' ];
 
+    // ✅ 간단 alias (필요시 확장)
+    const aliasMap = {
+      '해바라기': 'Sunflower',
+      '벚나무': 'Prunus serrulata',
+      '소나무': 'Pine',
+      '장미': 'Rose',
+      '튤립': 'Tulip',
+    };
+
     function apiURL(lang, path) { return `https://${lang}.wikipedia.org${path}`; }
 
-    async function searchTitle(query, lang) {
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.remove('hidden');
+      setTimeout(()=>t.classList.add('hidden'), 4000);
+    }
+
+    function setStatus(msg) { statusEl.textContent = msg || ''; }
+    function show(el) { el.classList.remove('hidden'); }
+    function hide(el) { el.classList.add('hidden'); }
+
+    // 🔧 검색 유틸: 상위 결과 중 best match 선정
+    function bestSearchHit(list, q){
+      if(!Array.isArray(list) || !list.length) return null;
+      const lowerQ = q.toLowerCase();
+      // 1) 제목 완전일치, 2) 제목에 포함, 3) 가장 짧은 제목
+      const exact = list.find(h => (h.title||'').toLowerCase() === lowerQ);
+      if (exact) return exact;
+      const contains = list.find(h => (h.title||'').toLowerCase().includes(lowerQ));
+      if (contains) return contains;
+      return list.sort((a,b)=> (a.title||'').length - (b.title||'').length)[0];
+    }
+
+    async function searchTitleRaw(query, lang){
       const url = apiURL(lang, `/w/api.php?action=query&list=search&srnamespace=0&srsearch=${encodeURIComponent(query)}&format=json&origin=*`);
       const r = await fetch(url);
-      const j = await r.json();
-      return j?.query?.search?.[0]?.title || null;
+      if(!r.ok) throw new Error('검색 실패');
+      return (await r.json())?.query?.search || [];
+    }
+
+    async function searchTitle(query, lang){
+      // 1차: 입력어 그대로
+      let hits = await searchTitleRaw(query, lang);
+      let pick = bestSearchHit(hits, query);
+      if (pick) return pick.title;
+      // 2차: 한->영 alias
+      if (lang==='ko' && aliasMap[query]){
+        hits = await searchTitleRaw(aliasMap[query], 'en');
+        pick = bestSearchHit(hits, aliasMap[query]);
+        if (pick) return { title: pick.title, lang: 'en' };
+      }
+      // 3차: ko에서 실패 시 en로 같은 문자열 재시도
+      if (lang==='ko'){
+        hits = await searchTitleRaw(query, 'en');
+        pick = bestSearchHit(hits, query);
+        if (pick) return { title: pick.title, lang: 'en' };
+      }
+      return null;
     }
 
     async function getSummary(title, lang) {
@@ -180,25 +235,32 @@
     }
 
     function stripRefs(html) {
-      return html.replaceAll(/<sup[^>]*class=\"reference\"[\s\S]*?<\/sup>/g, '').replaceAll(/<table[^>]*class=\"infobox[\s\S]*?<\/table>/g, '').replaceAll(/<style[\s\S]*?<\/style>/g, '').replaceAll(/<script[\s\S]*?<\/script>/g, '').replaceAll(/\s\(\s*편집\s*\)/g, '');
+      return html
+        .replaceAll(/<sup[^>]*class="reference"[\s\S]*?<\/sup>/g, '')
+        .replaceAll(/<table[^>]*class="infobox[\s\S]*?<\/table>/g, '')
+        .replaceAll(/<style[\s\S]*?<\/style>/g, '')
+        .replaceAll(/<script[\s\S]*?<\/script>/g, '')
+        .replaceAll(/\s\(\s*편집\s*\)/g, '');
     }
 
-    function cardHTML(title, inner) { return `<article class=\"bg-white rounded-2xl shadow p-5\"><h4 class=\"font-semibold mb-2\">${title}</h4><div class=\"prose max-w-none\">${inner}</div></article>`; }
+    function cardHTML(title, inner) { return `<article class="bg-white rounded-2xl shadow p-5"><h4 class="font-semibold mb-2">${title}</h4><div class="prose max-w-none">${inner}</div></article>`; }
 
     function imageItemHTML(item) {
       const thumb = item?.thumbnail?.source || item?.srcset?.[0]?.src;
       const src = item?.original?.source || thumb;
       const caption = item?.title || item?.caption?.text || '';
       const credit = item?.artist?.text || item?.credit || '';
-      return `<a href=\"${src}\" target=\"_blank\" class=\"group block overflow-hidden rounded-xl border bg-white\"><img src=\"${thumb}\" alt=\"${caption}\" class=\"w-full h-40 object-cover group-hover:scale-105 transition\"/><div class=\"p-2 text-xs text-slate-600"><div class=\"truncate\">${caption || '이미지'}</div><div class=\"text-[10px] text-slate-400 truncate\">${credit || ''}</div></div></a>`;
+      return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white">
+        <img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/>
+        <div class="p-2 text-xs text-slate-600">
+          <div class="truncate">${caption || '이미지'}</div>
+          <div class="text-[10px] text-slate-400 truncate">${credit || ''}</div>
+        </div>
+      </a>`;
     }
 
-    function setStatus(msg) { statusEl.textContent = msg || ''; }
-    function show(el) { el.classList.remove('hidden'); }
-    function hide(el) { el.classList.add('hidden'); }
-
     function generateGrowthInfo(summaryText) {
-      let text = summaryText.toLowerCase();
+      const text = (summaryText || '').toLowerCase();
       if (text.includes('씨앗') || text.includes('seed')) {
         return "이 식물은 씨앗에서 발아하여 자라며, 잎과 줄기가 발달한 후 꽃이 피고 열매를 맺습니다.";
       } else if (text.includes('포자') || text.includes('spore')) {
@@ -213,27 +275,32 @@
     }
 
     function generateClassification(summaryText){
-      const list1=[]; const list2=[];
-      const t = summaryText.toLowerCase();
-      if(/한해살이|annual/.test(t)) list1.push('🌼 한해살이 식물 (1년 주기)');
-      if(/두해살이|biennial/.test(t)) list1.push('🌿 두해살이 식물 (2년 주기)');
-      if(/여러해살이|다년생|perennial/.test(t)) list1.push('🍀 여러해살이 식물 (여러 해)');
-      if(/나무|수목|tree/.test(t)) list2.push('🌳 나무류(목본식물)');
-      if(/꽃|화초|flower/.test(t)) list2.push('🌸 꽃 식물(초본식물)');
-      return {lifeSpan: list1, type: list2};
+      const lifeSpan=[]; const type=[];
+      const t = (summaryText||'').toLowerCase();
+      if(/한해살이|annual/.test(t)) lifeSpan.push('🌼 한해살이 식물 (1년 주기)');
+      if(/두해살이|biennial/.test(t)) lifeSpan.push('🌿 두해살이 식물 (2년 주기)');
+      if(/여러해살이|다년생|perennial/.test(t)) lifeSpan.push('🍀 여러해살이 식물 (여러 해)');
+      if(/나무|수목|tree/.test(t)) type.push('🌳 나무류(목본식물)');
+      if(/꽃|화초|flower/.test(t)) type.push('🌸 꽃 식물(초본식물)');
+      return {lifeSpan, type};
     }
 
     async function run(query, lang) {
       try {
-        setStatus('검색 중…');
+        setStatus('검색 중…'); showToast('검색을 시작합니다.');
         hide($('#summary')); hide($('#galleryWrap')); hide($('#growthWrap')); hide($('#stageCards')); hide($('#classification'));
         $('#sections').innerHTML = ''; $('#gallery').innerHTML = '';
 
-        let title = await searchTitle(query, lang);
-        let usedLang = lang;
+        let title = null; let usedLang = lang;
+        const first = await searchTitle(query, lang);
+        if (typeof first === 'object' && first?.title){ title = first.title; usedLang = first.lang || lang; }
+        else if (typeof first === 'string') { title = first; }
 
-        if (!title && lang === 'ko') { usedLang = 'en'; title = await searchTitle(query, 'en'); }
-        if (!title) { setStatus('검색 결과가 없습니다.'); return; }
+        if (!title) {
+          setStatus('검색 결과가 없습니다. 다른 검색어나 학명으로 시도하세요.');
+          showToast('검색 결과가 없습니다. 영어 이름/학명으로 다시 검색해 보세요.');
+          return;
+        }
 
         const summary = await getSummary(title, usedLang);
         $('#title').textContent = summary.title || title;
@@ -247,4 +314,51 @@
         const picks = pickSectionsByLabels(sections, usedLang);
         const secWrap = $('#sections');
         if (picks.length) {
-         
+          for (const p of picks) {
+            const html = await getSectionHTML(summary.title || title, p.index, usedLang);
+            const clean = stripRefs(html);
+            const div = document.createElement('div');
+            div.innerHTML = cardHTML(p.name, clean);
+            div.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
+            secWrap.appendChild(div.firstElementChild);
+          }
+        }
+
+        const growthInfo = generateGrowthInfo(summary.extract || '');
+        const comparison = generateComparison(summary.extract || '');
+        $('#growthContent').innerHTML = `<p>${growthInfo}</p><p class="mt-2">${comparison}</p>`;
+        show($('#growthWrap'));
+        show($('#stageCards'));
+
+        const {lifeSpan, type} = generateClassification(summary.extract || '');
+        const lifeEl = document.getElementById('lifeSpanInfo');
+        const typeEl = document.getElementById('typeInfo');
+        lifeEl.innerHTML = (lifeSpan.length? lifeSpan : ['해당 문서에서 생육 기간 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
+        typeEl.innerHTML = (type.length? type : ['해당 문서에서 종류 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
+        show($('#classification'));
+
+        const media = await getMediaList(summary.title || title, usedLang);
+        const images = (media.items || []).filter(x => x.type === 'image' || x?.type === 'mediainfo');
+        if (images.length) {
+          $('#gallery').innerHTML = images.slice(0, 16).map(imageItemHTML).join('');
+          show($('#galleryWrap'));
+        }
+
+        setStatus('');
+      } catch (e) {
+        console.error(e);
+        setStatus('불러오는 중 문제가 발생했어요. 개발자 도구(Console)에서 오류 메시지를 확인해 주세요.');
+        showToast('오류가 발생했습니다. 네트워크 또는 CORS 설정을 확인해 주세요.');
+      }
+    }
+
+    // 이벤트 바인딩
+    document.getElementById('searchBtn').addEventListener('click', () => run(document.getElementById('q').value.trim() || '해바라기', document.getElementById('lang').value));
+    document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('searchBtn').click(); });
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+    // 초기 실행 예시
+    window.addEventListener('DOMContentLoaded', () => run('해바라기', 'ko'));
+  </script>
+</body>
+</html>
