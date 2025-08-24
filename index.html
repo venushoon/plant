@@ -70,38 +70,51 @@
     <section id="sections" class="mt-6 grid lg:grid-cols-3 gap-6 print-grid"></section>
 
     <section id="growthWrap" class="mt-6 hidden">
-      <h3 class="text-lg font-semibold mb-3">한살이 과정 요약</h3>
+      <h3 class="text-lg font-semibold mb-3">한살이 과정 요약 (초등 눈높이)</h3>
       <div id="growthContent" class="bg-white rounded-2xl shadow p-5 text-slate-700 leading-7"></div>
     </section>
 
-    <!-- 단계별 카드 -->
+    <!-- 단계별 카드 (동적 내용 주입) -->
     <section id="stageCards" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center">
           <div class="text-4xl">🌱</div>
           <div class="mt-2 font-semibold">발아</div>
-          <p class="text-sm text-slate-600 text-center mt-1">씨앗에서 싹이 트며 뿌리와 줄기가 자라기 시작</p>
+          <p id="stage-germination" class="text-sm text-slate-600 text-center mt-1"></p>
         </div>
         <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center">
           <div class="text-4xl">🌿</div>
           <div class="mt-2 font-semibold">성장</div>
-          <p class="text-sm text-slate-600 text-center mt-1">잎과 줄기가 무성하게 자라며 광합성을 활발히 함</p>
+          <p id="stage-growth" class="text-sm text-slate-600 text-center mt-1"></p>
         </div>
         <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center">
-          <div class="text-4xl">🌸</div>
+          <div class="text-4xl">🌼</div>
           <div class="mt-2 font-semibold">개화</div>
-          <p class="text-sm text-slate-600 text-center mt-1">꽃이 피어 수분과 수정이 이루어짐</p>
+          <p id="stage-flowering" class="text-sm text-slate-600 text-center mt-1"></p>
         </div>
         <div class="bg-white rounded-2xl shadow p-5 flex flex-col items-center">
           <div class="text-4xl">🍎</div>
           <div class="mt-2 font-semibold">결실</div>
-          <p class="text-sm text-slate-600 text-center mt-1">열매가 맺히고 씨앗이 형성되어 번식 준비</p>
+          <p id="stage-fruiting" class="text-sm text-slate-600 text-center mt-1"></p>
         </div>
       </div>
     </section>
 
-    <!-- 추가 구분 카드 -->
+    <!-- 세부 특징 카드 (씨앗/뿌리/잎/꽃/피는 시기/열매) -->
+    <section id="detailWrap" class="mt-6 hidden">
+      <h3 class="text-lg font-semibold mb-3">세부 특징</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌰</span><h4 class="font-semibold">씨앗의 생김새</h4></div><ul id="feat-seed" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🫚</span><h4 class="font-semibold">뿌리의 모양</h4></div><ul id="feat-root" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🍃</span><h4 class="font-semibold">잎의 특징</h4></div><ul id="feat-leaf" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🌼</span><h4 class="font-semibold">꽃의 특징</h4></div><ul id="feat-flower" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">📅</span><h4 class="font-semibold">피는 시기</h4></div><ul id="feat-bloom" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2"><span class="text-2xl">🍎</span><h4 class="font-semibold">열매의 모양·특징</h4></div><ul id="feat-fruit" class="list-disc pl-5 mt-2 text-slate-700 leading-7"></ul></article>
+      </div>
+    </section>
+
+    <!-- 구분 카드 (한해/여러해, 나무/꽃) -->
     <section id="classification" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">식물 구분</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -144,12 +157,7 @@
 
     function apiURL(lang, path) { return `https://${lang}.wikipedia.org${path}`; }
 
-    function showToast(msg){
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.classList.remove('hidden');
-      setTimeout(()=>t.classList.add('hidden'), 4000);
-    }
-
+    function showToast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 3000); }
     function setStatus(msg) { statusEl.textContent = msg || ''; }
     function show(el) { el.classList.remove('hidden'); }
     function hide(el) { el.classList.add('hidden'); }
@@ -158,7 +166,6 @@
     function bestSearchHit(list, q){
       if(!Array.isArray(list) || !list.length) return null;
       const lowerQ = q.toLowerCase();
-      // 1) 제목 완전일치, 2) 제목에 포함, 3) 가장 짧은 제목
       const exact = list.find(h => (h.title||'').toLowerCase() === lowerQ);
       if (exact) return exact;
       const contains = list.find(h => (h.title||'').toLowerCase().includes(lowerQ));
@@ -168,127 +175,132 @@
 
     async function searchTitleRaw(query, lang){
       const url = apiURL(lang, `/w/api.php?action=query&list=search&srnamespace=0&srsearch=${encodeURIComponent(query)}&format=json&origin=*`);
-      const r = await fetch(url);
-      if(!r.ok) throw new Error('검색 실패');
-      return (await r.json())?.query?.search || [];
+      const r = await fetch(url); if(!r.ok) throw new Error('검색 실패'); return (await r.json())?.query?.search || [];
     }
 
     async function searchTitle(query, lang){
-      // 1차: 입력어 그대로
       let hits = await searchTitleRaw(query, lang);
       let pick = bestSearchHit(hits, query);
       if (pick) return pick.title;
-      // 2차: 한->영 alias
       if (lang==='ko' && aliasMap[query]){
-        hits = await searchTitleRaw(aliasMap[query], 'en');
-        pick = bestSearchHit(hits, aliasMap[query]);
-        if (pick) return { title: pick.title, lang: 'en' };
+        hits = await searchTitleRaw(aliasMap[query], 'en'); pick = bestSearchHit(hits, aliasMap[query]); if (pick) return { title: pick.title, lang: 'en' };
       }
-      // 3차: ko에서 실패 시 en로 같은 문자열 재시도
       if (lang==='ko'){
-        hits = await searchTitleRaw(query, 'en');
-        pick = bestSearchHit(hits, query);
-        if (pick) return { title: pick.title, lang: 'en' };
+        hits = await searchTitleRaw(query, 'en'); pick = bestSearchHit(hits, query); if (pick) return { title: pick.title, lang: 'en' };
       }
       return null;
     }
 
-    async function getSummary(title, lang) {
-      const url = apiURL(lang, `/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('요약 불러오기 실패');
-      return r.json();
-    }
-
-    async function getSections(title, lang) {
-      const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=sections&format=json&origin=*`);
-      const r = await fetch(url);
-      const j = await r.json();
-      return j?.parse?.sections || [];
-    }
-
-    async function getSectionHTML(title, index, lang) {
-      const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&section=${index}&format=json&origin=*`);
-      const r = await fetch(url);
-      const j = await r.json();
-      return j?.parse?.text?.['*'] || '';
-    }
-
-    async function getMediaList(title, lang) {
-      const url = apiURL(lang, `/api/rest_v1/page/media-list/${encodeURIComponent(title)}`);
-      const r = await fetch(url);
-      if (!r.ok) return { items: [] };
-      return r.json();
-    }
+    async function getSummary(title, lang) { const url = apiURL(lang, `/api/rest_v1/page/summary/${encodeURIComponent(title)}`); const r = await fetch(url); if (!r.ok) throw new Error('요약 불러오기 실패'); return r.json(); }
+    async function getSections(title, lang) { const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=sections&format=json&origin=*`); const r = await fetch(url); const j = await r.json(); return j?.parse?.sections || []; }
+    async function getSectionHTML(title, index, lang) { const url = apiURL(lang, `/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&section=${index}&format=json&origin=*`); const r = await fetch(url); const j = await r.json(); return j?.parse?.text?.['*'] || ''; }
+    async function getMediaList(title, lang) { const url = apiURL(lang, `/api/rest_v1/page/media-list/${encodeURIComponent(title)}`); const r = await fetch(url); if (!r.ok) return { items: [] }; return r.json(); }
 
     function pickSectionsByLabels(sections, lang) {
       const labels = (lang === 'ko') ? sectionMapKo : sectionMapEn;
       const wanted = [];
-      for (const s of sections) {
-        const name = s?.line || '';
-        if (labels.some(l => name.toLowerCase().includes(l.toLowerCase()))) {
-          wanted.push({ index: s.index, name });
-        }
-      }
+      for (const s of sections) { const name = s?.line || ''; if (labels.some(l => name.toLowerCase().includes(l.toLowerCase()))) wanted.push({ index: s.index, name }); }
       const seen = new Set();
-      return wanted.filter(w => { const key = w.name.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 6);
+      return wanted.filter(w => { const key = w.name.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 8);
     }
 
     function stripRefs(html) {
       return html
-        .replaceAll(/<sup[^>]*class="reference"[\s\S]*?<\/sup>/g, '')
-        .replaceAll(/<table[^>]*class="infobox[\s\S]*?<\/table>/g, '')
+        .replaceAll(/<sup[^>]*class=\"reference\"[\s\S]*?<\/sup>/g, '')
+        .replaceAll(/<table[^>]*class=\"infobox[\s\S]*?<\/table>/g, '')
         .replaceAll(/<style[\s\S]*?<\/style>/g, '')
         .replaceAll(/<script[\s\S]*?<\/script>/g, '')
         .replaceAll(/\s\(\s*편집\s*\)/g, '');
     }
 
+    function htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return (tmp.textContent||tmp.innerText||'').replace(/\s+/g,' ').trim(); }
     function cardHTML(title, inner) { return `<article class="bg-white rounded-2xl shadow p-5"><h4 class="font-semibold mb-2">${title}</h4><div class="prose max-w-none">${inner}</div></article>`; }
+    function imageItemHTML(item) { const thumb = item?.thumbnail?.source || item?.srcset?.[0]?.src; const src = item?.original?.source || thumb; const caption = item?.title || item?.caption?.text || ''; const credit = item?.artist?.text || item?.credit || ''; return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white"><img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/><div class="p-2 text-xs text-slate-600"><div class="truncate">${caption || '이미지'}</div><div class="text-[10px] text-slate-400 truncate">${credit || ''}</div></div></a>`; }
 
-    function imageItemHTML(item) {
-      const thumb = item?.thumbnail?.source || item?.srcset?.[0]?.src;
-      const src = item?.original?.source || thumb;
-      const caption = item?.title || item?.caption?.text || '';
-      const credit = item?.artist?.text || item?.credit || '';
-      return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white">
-        <img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/>
-        <div class="p-2 text-xs text-slate-600">
-          <div class="truncate">${caption || '이미지'}</div>
-          <div class="text-[10px] text-slate-400 truncate">${credit || ''}</div>
-        </div>
-      </a>`;
+    // === 세부 분석 (중복 제거 + 초등 눈높이 요약) ===
+    const uniq = (arr)=> Array.from(new Set(arr.filter(Boolean).map(s=>s.trim()))).slice(0,6);
+
+    function analyzePlantFeatures(corpus){
+      const t = corpus.toLowerCase();
+      const seed=[], root=[], leaf=[], flower=[], bloom=[], fruit=[];
+      // 씨앗/열매 형태 단서
+      if(/achene|수과/.test(t)) { seed.push('낱알같은 씨(수과)'); fruit.push('마른 열매(수과)'); }
+      if(/berry|장과/.test(t)) fruit.push('물컹하고 즙이 많은 열매(장과)');
+      if(/drupe|핵과/.test(t)) fruit.push('씨가 딱딱한 핵과');
+      if(/capsule|삭과/.test(t)) fruit.push('익으면 터지는 삭과');
+      if(/samara|시마라|날개(?:달린)? 열매/.test(t)) fruit.push('날개 달린 열매(바람으로 이동)');
+      if(/cone|구과|strobilus/.test(t)) fruit.push('솔방울 같은 구과');
+
+      // 뿌리
+      if(/taproot|원뿌리/.test(t)) root.push('원뿌리(굵은 뿌리 하나가 길게)');
+      if(/fibrous root|수염뿌리/.test(t)) root.push('수염뿌리(가는 뿌리가 여러 갈래)');
+      if(/rhizome|땅속줄기/.test(t)) root.push('땅속줄기로 번식');
+      if(/tuber|덩이줄기/.test(t)) root.push('덩이줄기 저장');
+      if(/bulb|비늘줄기/.test(t)) root.push('비늘줄기(알뿌리)');
+
+      // 잎
+      if(/opposite|마주나기/.test(t)) leaf.push('잎이 마주나기');
+      if(/alternate|어긋나기/.test(t)) leaf.push('잎이 어긋나기');
+      if(/whorled|돌려나기/.test(t)) leaf.push('잎이 돌려나기');
+      if(/simple leaf|홑잎/.test(t)) leaf.push('홑잎');
+      if(/compound leaf|겹잎/.test(t)) leaf.push('겹잎');
+      if(/needle|바늘잎/.test(t)) leaf.push('바늘 같은 잎');
+      if(/broadleaf|넓은잎/.test(t)) leaf.push('넓은 잎');
+
+      // 꽃
+      if(/inflorescence|화서|head\b|두상화서|raceme|panicle|spike|umbel/.test(t)) flower.push('꽃이 모여 피는 화서 특징');
+      if(/petal|꽃잎|sepal|꽃받침/.test(t)) flower.push('꽃잎·꽃받침 구조 단서');
+      if(/color|yellow|white|red|pink|purple|노란|하얀|붉|분홍|보라/.test(t)) flower.push('꽃 색깔 단서');
+
+      // 피는 시기 (월/계절)
+      const monthMatch = t.match(/(\d{1,2})\s*[-~–]\s*(\d{1,2})\s*월/);
+      if(monthMatch){ bloom.push(`${monthMatch[1]}~${monthMatch[2]}월`); }
+      if(/봄|spring/.test(t)) bloom.push('봄');
+      if(/여름|summer/.test(t)) bloom.push('여름');
+      if(/가을|autumn|fall\b/.test(t)) bloom.push('가을');
+      if(/겨울|winter/.test(t)) bloom.push('겨울');
+
+      // 씨앗에 대한 일반 단서
+      if(/seed|씨앗/.test(t) && seed.length===0) seed.push('씨앗으로 번식');
+
+      return {
+        seed: uniq(seed), root: uniq(root), leaf: uniq(leaf), flower: uniq(flower), bloom: uniq(bloom), fruit: uniq(fruit)
+      };
     }
 
-    function generateGrowthInfo(summaryText) {
-      const text = (summaryText || '').toLowerCase();
-      if (text.includes('씨앗') || text.includes('seed')) {
-        return "이 식물은 씨앗에서 발아하여 자라며, 잎과 줄기가 발달한 후 꽃이 피고 열매를 맺습니다.";
-      } else if (text.includes('포자') || text.includes('spore')) {
-        return "이 식물은 포자로 번식하여 발아 후 어린 개체가 자라 성체로 성장합니다.";
-      } else {
-        return "이 식물의 생활사는 씨앗이나 포자에서 시작해 자라고 꽃을 피운 뒤 열매를 맺는 과정을 거칩니다.";
-      }
-    }
-
-    function generateComparison(summaryText) {
-      return "어린 시기에는 작은 새싹과 연약한 잎으로 나타나고, 성숙하면 꽃과 열매를 맺으며 번식에 기여합니다.";
+    function generateElementaryGrowth(corpus){
+      const t = corpus.toLowerCase();
+      const steps=[];
+      // 발아
+      steps.push('① 씨앗이 물을 만나 껍질이 부드러워지면 작은 뿌리와 싹이 나와요.');
+      // 성장
+      if(/taproot|원뿌리/.test(t)) steps.push('② 원뿌리가 길게 자라며 줄기와 잎이 무럭무럭 커져요.');
+      else if(/fibrous root|수염뿌리/.test(t)) steps.push('② 수염뿌리가 여러 갈래로 뻗어 식물을 단단히 붙잡아요.');
+      else steps.push('② 뿌리가 자라며 줄기와 잎이 넓어져 햇빛을 받아요.');
+      // 개화
+      if(/spring|봄/.test(t)) steps.push('③ 봄에 꽃이 피어 곤충·바람이 꽃가루를 옮겨요.');
+      else if(/summer|여름/.test(t)) steps.push('③ 여름에 꽃이 피어 수분이 일어나요.');
+      else steps.push('③ 꽃이 피면 수분(꽃가루 옮김)과 수정이 이루어져요.');
+      // 결실
+      if(/berry|장과|drupe|핵과|achene|수과|capsule|삭과|samara|구과|cone/.test(t)) steps.push('④ 씨앗이 들어 있는 열매가 여물어 퍼질 준비를 해요.');
+      else steps.push('④ 꽃이 지고 열매가 맺혀 씨앗을 만들어 퍼뜨려요.');
+      return steps.map(s=>`<li>${s}</li>`).join('');
     }
 
     function generateClassification(summaryText){
-      const lifeSpan=[]; const type=[];
-      const t = (summaryText||'').toLowerCase();
+      const lifeSpan=[]; const type=[]; const t = (summaryText||'').toLowerCase();
       if(/한해살이|annual/.test(t)) lifeSpan.push('🌼 한해살이 식물 (1년 주기)');
       if(/두해살이|biennial/.test(t)) lifeSpan.push('🌿 두해살이 식물 (2년 주기)');
       if(/여러해살이|다년생|perennial/.test(t)) lifeSpan.push('🍀 여러해살이 식물 (여러 해)');
       if(/나무|수목|tree/.test(t)) type.push('🌳 나무류(목본식물)');
-      if(/꽃|화초|flower/.test(t)) type.push('🌸 꽃 식물(초본식물)');
-      return {lifeSpan, type};
+      if(/꽃|화초|flower|herbaceous/.test(t)) type.push('🌸 꽃 식물(초본식물)');
+      return {lifeSpan: uniq(lifeSpan), type: uniq(type)};
     }
 
     async function run(query, lang) {
       try {
         setStatus('검색 중…'); showToast('검색을 시작합니다.');
-        hide($('#summary')); hide($('#galleryWrap')); hide($('#growthWrap')); hide($('#stageCards')); hide($('#classification'));
+        hide($('#summary')); hide($('#galleryWrap')); hide($('#growthWrap')); hide($('#stageCards')); hide($('#classification')); hide($('#detailWrap'));
         $('#sections').innerHTML = ''; $('#gallery').innerHTML = '';
 
         let title = null; let usedLang = lang;
@@ -296,11 +308,7 @@
         if (typeof first === 'object' && first?.title){ title = first.title; usedLang = first.lang || lang; }
         else if (typeof first === 'string') { title = first; }
 
-        if (!title) {
-          setStatus('검색 결과가 없습니다. 다른 검색어나 학명으로 시도하세요.');
-          showToast('검색 결과가 없습니다. 영어 이름/학명으로 다시 검색해 보세요.');
-          return;
-        }
+        if (!title) { setStatus('검색 결과가 없습니다. 다른 검색어나 학명으로 시도하세요.'); showToast('검색 결과가 없습니다. 영어 이름/학명으로 다시 검색해 보세요.'); return; }
 
         const summary = await getSummary(title, usedLang);
         $('#title').textContent = summary.title || title;
@@ -310,39 +318,64 @@
         $('#meta').textContent = `언어: ${usedLang.toUpperCase()} · 문서 ID: ${summary.pageid || '-'} · 분류: ${summary.description || ''}`;
         show($('#summary'));
 
+        // 섹션 수집 및 본문 corpus 구성 (중복 제거 대비)
         const sections = await getSections(summary.title || title, usedLang);
         const picks = pickSectionsByLabels(sections, usedLang);
         const secWrap = $('#sections');
+        const corpusParts = [summary.extract || ''];
         if (picks.length) {
           for (const p of picks) {
             const html = await getSectionHTML(summary.title || title, p.index, usedLang);
             const clean = stripRefs(html);
-            const div = document.createElement('div');
-            div.innerHTML = cardHTML(p.name, clean);
+            const div = document.createElement('div'); div.innerHTML = cardHTML(p.name, clean);
             div.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
             secWrap.appendChild(div.firstElementChild);
+            corpusParts.push(htmlToText(clean));
           }
         }
+        const corpus = corpusParts.join(' \n ');
 
-        const growthInfo = generateGrowthInfo(summary.extract || '');
-        const comparison = generateComparison(summary.extract || '');
-        $('#growthContent').innerHTML = `<p>${growthInfo}</p><p class="mt-2">${comparison}</p>`;
+        // 🔹 한살이 과정 요약 (초등)
+        const growthList = generateElementaryGrowth(corpus);
+        $('#growthContent').innerHTML = `<ul class="list-disc pl-5">${growthList}</ul>`;
         show($('#growthWrap'));
+
+        // 🔹 세부 특징 분석 + 카드 주입
+        const feats = analyzePlantFeatures(corpus);
+        const fill = (id, arr, alt)=>{ const el = document.getElementById(id); el.innerHTML = (arr.length? arr: [alt]).map(s=>`<li>${s}</li>`).join(''); };
+        fill('feat-seed', feats.seed, '씨앗 모양 정보가 적어요. 관찰하며 기록해 보세요.');
+        fill('feat-root', feats.root, '뿌리 모양 단서가 적어요. 원뿌리/수염뿌리인지 살펴보세요.');
+        fill('feat-leaf', feats.leaf, '잎의 난형/바늘잎, 마주/어긋나기를 관찰해 보세요.');
+        fill('feat-flower', feats.flower, '꽃잎 수·색깔·모여 피는지(화서)를 관찰해 보세요.');
+        fill('feat-bloom', feats.bloom, '피는 달(예: 4~5월)이나 계절 단서를 찾아보세요.');
+        fill('feat-fruit', feats.fruit, '열매가 물러요? 딱딱해요? 날개가 있나요? 기록해 보세요.');
+        show($('#detailWrap'));
+
+        // 🔹 단계별 카드에 세부 문장 주입 (중복/반복 줄이기)
+        const stageTxt = {
+          germination: feats.seed[0] ? `씨앗이 깨어나요: ${feats.seed[0]}.` : '씨앗이 물을 마시고 껍질이 부드러워져 싹이 나와요.',
+          growth: (feats.root[0]||feats.leaf[0]) ? `뿌리·잎이 자라요: ${(feats.root[0]||'뿌리 자람')}, ${(feats.leaf[0]||'잎이 넓어짐')}.` : '뿌리·줄기·잎이 커지며 햇빛을 받아요.',
+          flowering: (feats.flower[0]||feats.bloom[0]) ? `꽃이 펴요: ${(feats.flower[0]||'꽃 구조')}, ${(feats.bloom[0]||'계절 단서')}.` : '꽃이 피고 꽃가루가 옮겨가요.',
+          fruiting: feats.fruit[0] ? `열매가 여물어요: ${feats.fruit[0]}.` : '열매가 맺혀 씨앗을 만들고 퍼져요.'
+        };
+        document.getElementById('stage-germination').textContent = stageTxt.germination;
+        document.getElementById('stage-growth').textContent = stageTxt.growth;
+        document.getElementById('stage-flowering').textContent = stageTxt.flowering;
+        document.getElementById('stage-fruiting').textContent = stageTxt.fruiting;
         show($('#stageCards'));
 
-        const {lifeSpan, type} = generateClassification(summary.extract || '');
+        // 🔹 구분 카드 (한해/여러해, 나무/꽃)
+        const {lifeSpan, type} = generateClassification(corpus);
         const lifeEl = document.getElementById('lifeSpanInfo');
         const typeEl = document.getElementById('typeInfo');
-        lifeEl.innerHTML = (lifeSpan.length? lifeSpan : ['해당 문서에서 생육 기간 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
-        typeEl.innerHTML = (type.length? type : ['해당 문서에서 종류 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
+        lifeEl.innerHTML = (lifeSpan.length? lifeSpan : ['생육 기간 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
+        typeEl.innerHTML = (type.length? type : ['종류 단서를 찾지 못했습니다.']).map(x=>`<li>${x}</li>`).join('');
         show($('#classification'));
 
+        // 🔹 이미지 갤러리
         const media = await getMediaList(summary.title || title, usedLang);
         const images = (media.items || []).filter(x => x.type === 'image' || x?.type === 'mediainfo');
-        if (images.length) {
-          $('#gallery').innerHTML = images.slice(0, 16).map(imageItemHTML).join('');
-          show($('#galleryWrap'));
-        }
+        if (images.length) { $('#gallery').innerHTML = images.slice(0, 16).map(imageItemHTML).join(''); show($('#galleryWrap')); }
 
         setStatus('');
       } catch (e) {
