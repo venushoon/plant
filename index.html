@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>식물 한살이 탐구 (Wikipedia 전용 · 강화판)</title>
+  <title>식물 한살이 탐구 (Wikipedia 전용 · 특징→단계 반영)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
       </svg>
       <div>
         <h1 class="text-xl font-bold">식물 한살이 탐구 (Wikipedia)</h1>
-        <p class="text-sm text-slate-500">발아·성장·개화·결실 + 세부 특징 · 중복 제거 · 자동 추정 강화</p>
+        <p class="text-sm text-slate-500">발아·성장·개화·결실 + 세부 특징 → 단계 카드 자동 반영</p>
       </div>
       <div class="ml-auto flex items-center gap-2">
         <button id="printBtn" class="no-print rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-slate-50 transition">인쇄/배포</button>
@@ -82,7 +82,7 @@
 
     <!-- 단계 카드 -->
     <section id="stageCards" class="mt-6 hidden">
-      <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실 (세부설명 포함)</h3>
+      <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실 (세부특징 반영)</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <article class="bg-white rounded-2xl shadow p-5 flex flex-col items-center text-center">
           <div class="text-4xl">🌱</div>
@@ -114,6 +114,7 @@
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🌰</span><h4 class="font-semibold">씨앗의 생김새</h4></div><ul id="feat-seed" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🫚</span><h4 class="font-semibold">뿌리의 모양</h4></div><ul id="feat-root" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🍃</span><h4 class="font-semibold">잎의 특징</h4></div><ul id="feat-leaf" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
+        <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🌿</span><h4 class="font-semibold">줄기의 특징</h4></div><ul id="feat-stem" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🌼</span><h4 class="font-semibold">꽃의 특징</h4></div><ul id="feat-flower" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">📅</span><h4 class="font-semibold">피는 시기</h4></div><ul id="feat-bloom" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
         <article class="bg-white rounded-2xl shadow p-5"><div class="flex items-center gap-2 mb-1"><span class="text-2xl">🍎</span><h4 class="font-semibold">열매의 모양·특징</h4></div><ul id="feat-fruit" class="list-disc pl-5 text-slate-700 leading-7"></ul></article>
@@ -178,7 +179,7 @@
     // === 특징 자동 추출 (중복 제거 & 확장 규칙) ===
     function analyzePlantFeatures(corpus){
       const t = norm(corpus);
-      let seed=[], root=[], leaf=[], flower=[], bloom=[], fruit=[], pollination=[];
+      let seed=[], root=[], leaf=[], stem=[], flower=[], bloom=[], fruit=[], pollination=[];
 
       // 열매/씨앗 유형
       if(/\b(achene|수과)\b/.test(t)) { seed.push('씨앗: 수과(작고 마른 씨)'); fruit.push('열매: 수과(마른 열매)'); }
@@ -191,9 +192,20 @@
       // 뿌리
       if(/\b(taproot|원뿌리)\b/.test(t)) root.push('원뿌리(굵은 뿌리 하나)');
       if(/\b(fibrous\s*root|수염뿌리)\b/.test(t)) root.push('수염뿌리(가는 뿌리 여럿)');
-      if(/\b(rhizome|땅속줄기)\b/.test(t)) root.push('땅속줄기로 번식');
-      if(/\b(tuber|덩이줄기)\b/.test(t)) root.push('덩이줄기에 양분 저장');
-      if(/\b(bulb|비늘줄기|알뿌리)\b/.test(t)) root.push('알뿌리(비늘줄기)');
+      if(/\b(rhizome|땅속줄기)\b/.test(t)) { root.push('땅속줄기로 번식'); stem.push('땅속줄기 존재'); }
+      if(/\b(tuber|덩이줄기)\b/.test(t)) { root.push('덩이줄기에 양분 저장'); stem.push('덩이줄기(줄기 비대)'); }
+      if(/\b(bulb|비늘줄기|알뿌리)\b/.test(t)) { root.push('알뿌리(비늘줄기)'); stem.push('비늘줄기(알뿌리)'); }
+
+      // 줄기 (형태/성질/방향)
+      if(/\b(woody|목질|tree\s*like|나무줄기)\b/.test(t)) stem.push('줄기: 목질(나무처럼 단단함)');
+      if(/\b(herbaceous|초본)\b/.test(t)) stem.push('줄기: 초본(부드럽고 풀이듯)');
+      if(/\b(succulent|다육질)\b/.test(t)) stem.push('줄기: 다육질(물 저장)');
+      if(/\b(climbing|vine|덩굴|twining)\b/.test(t)) stem.push('줄기: 덩굴성/감김');
+      if(/\b(erect|직립)\b/.test(t)) stem.push('줄기: 직립');
+      if(/\b(prostrate|포복)\b/.test(t)) stem.push('줄기: 땅을 기어 감(포복)');
+      if(/\b(hollow\s*stem|속이\s*빈\s*줄기)\b/.test(t)) stem.push('줄기: 속이 비어 있음');
+      if(/\b(square\s*stem|네모진\s*줄기)\b/.test(t)) stem.push('줄기: 네모진 단면');
+      if(/\b(thorn|spine|prickle|가시)\b/.test(t)) stem.push('줄기: 가시 존재');
 
       // 잎 배열/모양/가장자리/크기
       if(/\b(opposite|마주나기)\b/.test(t)) leaf.push('잎 배열: 마주나기');
@@ -203,7 +215,7 @@
       if(/\b(compound\s*leaf|겹잎)\b/.test(t)) leaf.push('잎: 겹잎');
       if(/\b(needle|바늘잎)\b/.test(t)) leaf.push('잎 모양: 바늘잎');
       if(/\b(broadleaf|넓은잎)\b/.test(t)) leaf.push('잎 모양: 넓은잎');
-      if(/\b(linear|선형)\b/.test(t)) leaf.push('잎 모양: 선형(가늘고 김)');
+      if(/\b(linear|선형)\b/.test(t)) leaf.push('잎 모양: 선형');
       if(/\b(ovate|난형)\b/.test(t)) leaf.push('잎 모양: 난형');
       if(/\b(elliptic|타원형)\b/.test(t)) leaf.push('잎 모양: 타원형');
       if(/\b(heart\-shaped|cordate|심장형)\b/.test(t)) leaf.push('잎 모양: 심장형');
@@ -247,22 +259,21 @@
       if(/\b(water\s*pollination|수매)\b/.test(t)) pollination.push('물(수매) 수분');
 
       const uniq = (arr)=> Array.from(new Set(arr.map(s=>s.replace(/\s+/g,' ').trim())));
-      return { seed:uniq(seed), root:uniq(root), leaf:uniq(leaf), flower:uniq(flower), bloom:uniq(bloom), fruit:uniq(fruit), pollination:uniq(pollination) };
+      return { seed:uniq(seed), root:uniq(root), leaf:uniq(leaf), stem:uniq(stem), flower:uniq(flower), bloom:uniq(bloom), fruit:uniq(fruit), pollination:uniq(pollination) };
     }
 
     // === 한살이 요약(초등) · 세부 단계 문구 생성 ===
     function generateElementaryGrowth(corpus, feats){
-      // 더 구체적으로: 씨앗 흡수→뿌리 유형→잎 전개→수분 방법→결실·씨앗 퍼짐
       const hasTap = feats.root.includes('원뿌리(굵은 뿌리 하나)');
       const hasFib = feats.root.includes('수염뿌리(가는 뿌리 여럿)');
       const poll = feats.pollination[0] || '수분(꽃가루받이)';
-      const bloomHint = feats.bloom[0] || '적절한 계절에';
+      const bloomHint = feats.bloom[0] || '알맞은 계절에';
       const fruitHint = feats.fruit[0] || '열매가 자라 씨앗을 보호';
 
       const lines = [
         '① 씨앗이 물을 빨아들여 껍질이 부드러워지면 작은 뿌리와 싹이 나와요.',
-        hasTap ? '② 굵은 원뿌리가 아래로 길게 자라며 식물을 단단히 고정해요.' : hasFib ? '② 여러 갈래의 수염뿌리가 사방으로 퍼져 흔들림을 줄여요.' : '② 뿌리·줄기·잎이 점점 커지며 햇빛을 받아 에너지를 만들어요.',
-        '③ 잎이 넓게 펼쳐져 공기 중의 이산화탄소와 물을 이용해 광합성을 해요.',
+        hasTap ? '② 굵은 원뿌리가 아래로 길게 자라고 줄기가 위로 자라요.' : hasFib ? '② 여러 갈래의 수염뿌리가 사방으로 퍼지고 줄기가 점점 길어져요.' : '② 뿌리·줄기·잎이 커지며 햇빛을 받아 에너지를 만들어요.',
+        '③ 잎이 넓게 펼쳐지고 줄기가 튼튼해져 스스로 서 있을 수 있어요.',
         `④ ${bloomHint} 꽃이 피고, ${poll}가 일어나 씨방 속에 씨가 만들어져요.`,
         `⑤ ${fruitHint}하고, 익은 씨앗이 바람·동물·사람 등에 의해 널리 퍼져요.`
       ];
@@ -270,19 +281,21 @@
     }
 
     function buildStageTexts(feats){
-      const seedTxt = feats.seed[0] || '씨앗이 물을 만나 껍질이 부드러워지고 싹이 나와요.';
-      const rootTxt = feats.root[0] || '뿌리가 자라 흙 속에 단단히 자리 잡아요.';
-      const leafBits = feats.leaf.filter(x=>x.startsWith('잎 ' )||x.startsWith('잎 배열')||x.startsWith('잎 모양')||x.startsWith('잎 가장자리')||x.startsWith('잎 크기')).slice(0,2);
-      const leafTxt = (leafBits.join(' · ') || '잎이 펼쳐져 햇빛을 받아요.');
-      const flowerBits = feats.flower.filter(x=>x.startsWith('꽃 ')).slice(0,2);
+      // 발아: 씨앗+뿌리, 성장: 줄기+잎, 개화: 꽃+수분+시기, 결실: 열매
+      const pick2 = (arr)=> arr.slice(0,2).join(' · ');
+      const seedTxt = feats.seed[0] || '씨앗이 물을 만나 싹이 나와요.';
+      const rootTxt = feats.root[0] || '뿌리가 자라 흙에 단단히 고정돼요.';
+      const stemTxt = feats.stem[0] || '줄기가 자라며 식물을 지탱해요.';
+      const leafTxt = pick2(feats.leaf.filter(x=>/잎/.test(x))) || '잎이 펼쳐져 햇빛을 받아요.';
+      const flowerTxt = pick2(feats.flower.filter(x=>x.startsWith('꽃 '))) || '다양한 색의 꽃이 피어요';
       const pollTxt = feats.pollination[0] ? `, ${feats.pollination[0]}로` : '';
       const bloomTxt = feats.bloom[0] ? ` (${feats.bloom[0]})` : '';
       const fruitTxt = feats.fruit[0] || '열매가 자라 씨앗을 보호해요.';
 
       return {
         germination: `${seedTxt} ${rootTxt}`,
-        growth: `${leafTxt}`,
-        flowering: `${(flowerBits.join(' · ')||'다양한 색의 꽃이 피어요')}${bloomTxt}${pollTxt} 수분이 일어나요.`,
+        growth: `${stemTxt} ${leafTxt}`,
+        flowering: `${flowerTxt}${bloomTxt}${pollTxt} 수분이 일어나요.`,
         fruiting: `${fruitTxt} 익으면 씨앗이 퍼져 다음 해에 새 식물이 자라요.`
       };
     }
@@ -322,7 +335,7 @@
           const html = await getSectionHTML(summary.title || title, p.index, usedLang);
           const clean = stripRefs(html);
           const card = document.createElement('div');
-          card.innerHTML = `<article class="bg-white rounded-2xl shadow p-5"><h4 class="font-semibold mb-2">${p.name}</h4><div class="prose max-w-none">${clean}</div></article>`;
+          card.innerHTML = `<article class=\"bg-white rounded-2xl shadow p-5\"><h4 class=\"font-semibold mb-2\">${p.name}</h4><div class=\"prose max-w-none\">${clean}</div></article>`;
           card.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
           secWrap.appendChild(card.firstElementChild);
           corpusParts.push(htmlToText(clean));
@@ -334,13 +347,14 @@
         fillList('feat-seed', feats.seed, '씨앗의 모양을 관찰해 기록해 보세요.');
         fillList('feat-root', feats.root, '원뿌리인지 수염뿌리인지 살펴보세요.');
         fillList('feat-leaf', feats.leaf, '잎 배열·모양·가장자리·크기를 관찰해 보세요.');
+        fillList('feat-stem', feats.stem, '줄기의 굵기·방향(직립/덩굴)과 성질(초본/목본)을 살펴보세요.');
         fillList('feat-flower', feats.flower, '꽃의 색과 꽃잎 수, 화서를 살펴보세요.');
         fillList('feat-bloom', feats.bloom, '피는 계절이나 달을 찾아보세요.');
         fillList('feat-fruit', feats.fruit, '열매의 형태와 씨앗 퍼짐 방법을 확인해 보세요.');
         fillList('feat-pollination', feats.pollination, '곤충·바람·새·자가 등 어떻게 꽃가루가 옮겨가는지 확인해 보세요.');
         show($('#detailWrap'));
 
-        // 한살이 요약(초등) · 단계 카드 텍스트
+        // 한살이 요약(초등) · 단계 카드 텍스트 (특징 반영)
         $('#growthContent').innerHTML = generateElementaryGrowth(corpus, feats);
         const stage = buildStageTexts(feats);
         $('#stage-germination').textContent = stage.germination;
@@ -358,7 +372,7 @@
             const src = item?.original?.source || thumb;
             const caption = item?.title || item?.caption?.text || '';
             const credit = item?.artist?.text || item?.credit || '';
-            return `<a href="${src}" target="_blank" class="group block overflow-hidden rounded-xl border bg-white"><img src="${thumb}" alt="${caption}" class="w-full h-40 object-cover group-hover:scale-105 transition"/><div class="p-2 text-xs text-slate-600"><div class="truncate">${caption || '이미지'}</div><div class="text-[10px] text-slate-400 truncate">${credit || ''}</div></div></a>`;
+            return `<a href=\"${src}\" target=\"_blank\" class=\"group block overflow-hidden rounded-xl border bg-white\"><img src=\"${thumb}\" alt=\"${caption}\" class=\"w-full h-40 object-cover group-hover:scale-105 transition\"/><div class=\"p-2 text-xs text-slate-600\"><div class=\"truncate\">${caption || '이미지'}</div><div class=\"text-[10px] text-slate-400 truncate\">${credit || ''}</div></div></a>`;
           }).join('');
           show($('#galleryWrap'));
         }
