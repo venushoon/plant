@@ -391,7 +391,7 @@
             }).slice(0, 8);
         },
         analyzePlantFeatures(corpus){
-            const t = this.norm(corpus);
+            const t = PlantExplorer.utils.norm(corpus);
             const find = (regex, value) => regex.test(t) ? [value] : [];
             const uniq = (arr) => Array.from(new Set(arr.flat().map(s=>s.trim())));
 
