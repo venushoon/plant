@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>식물의 한살이 탐구 (위키백과 + GBIF + iNaturalist)</title>
+  <title>식물의 한살이 탐구 (위키백과 + GBIF + iNaturalist + EOL)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,7 @@
       </svg>
       <div>
         <h1 class="text-xl font-bold">식물의 한살이 탐구</h1>
-        <p class="text-sm text-slate-500">위키백과 + GBIF + iNaturalist</p>
+        <p class="text-sm text-slate-500">위키백과 + GBIF + iNaturalist + EOL</p>
       </div>
       <div class="ml-auto flex items-center gap-2">
         <button id="printBtn" class="no-print rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-slate-50 transition">인쇄/공유</button>
@@ -57,6 +57,15 @@
           <div class="space-y-2">
             <label class="flex items-center gap-2"><input id="optGBIF" type="checkbox" class="accent-emerald-600" checked> <span>GBIF (분류/분포)</span></label>
             <label class="flex items-center gap-2"><input id="optINat" type="checkbox" class="accent-emerald-600" checked> <span>iNaturalist (관찰 사진)</span></label>
+            <label class="flex items-center gap-2"><input id="optEOL" type="checkbox" class="accent-emerald-600" checked> <span>EOL (설명/이미지 - 프록시 필요)</span></label>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="w-28 text-sm text-slate-600">프록시 URL</label>
+              <input id="proxyURL" class="flex-1 rounded-lg border px-3 py-2" value="https://corsproxy.io/?" />
+              <button id="proxyTest" class="rounded-lg border px-3 py-2 text-sm">테스트</button>
+            </div>
+            <p class="text-xs text-slate-500">※ CORS 오류 발생 시 프록시를 통해 데이터를 우회하여 가져옵니다.</p>
           </div>
         </div>
       </details>
@@ -155,10 +164,15 @@
 
       // --- API 호출 함수 ---
       api: {
-        async fetchJSON(url) {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          return response.json();
+        async fetchJSON(url, useProxy = false) {
+            let requestUrl = url;
+            if (useProxy) {
+                const proxy = document.getElementById('proxyURL').value.trim();
+                requestUrl = `${proxy}${url}`;
+            }
+            const response = await fetch(requestUrl);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
         },
         async searchTitleRaw(query, lang) {
           const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srnamespace=0&srsearch=${encodeURIComponent(query)}&format=json&origin=*`;
@@ -216,6 +230,39 @@
             }).filter(Boolean);
             return { type: 'inat', images };
           } catch (e) { console.warn('[INat]', e); return { type: 'inat', images: [] }; }
+        },
+        async fetchEOL(name) {
+          try {
+            const searchUrl = `https://eol.org/api/search/1.0.json?q=${encodeURIComponent(name)}`;
+            const searchData = await this.fetchJSON(searchUrl);
+            const id = (searchData.results || [])[0]?.id;
+            if (id) {
+              const pageUrl = `https://eol.org/api/pages/1.0.json?id=${id}&details=true&images_per_page=5&texts_per_page=5`;
+              const pageData = await this.fetchJSON(pageUrl);
+              const texts = (pageData.dataObjects || []).filter(o => o.dataType?.includes('Text')).map(o => o.description).join(' ');
+              const images = (pageData.dataObjects || []).filter(o => o.dataType?.includes('StillImage') && o.eolMediaURL).map(o => ({ thumb: o.eolThumbnailURL || o.thumbnailURL || o.eolMediaURL, src: o.eolMediaURL, caption: o.title || 'EOL Image', credit: o.rightsHolder || o.license || 'EOL' }));
+              return { type: 'eol', text: texts, images: images };
+            }
+            return { type: 'eol', text: '', images: [] };
+          } catch (e) {
+            console.warn('[EOL API Direct]', e, 'Falling back to proxy.');
+            try {
+              const searchUrl = `https://eol.org/api/search/1.0.json?q=${encodeURIComponent(name)}`;
+              const searchData = await this.fetchJSON(searchUrl, true); // 프록시 사용
+              const id = (searchData.results || [])[0]?.id;
+               if (id) {
+                  const pageUrl = `https://eol.org/api/pages/1.0.json?id=${id}&details=true&images_per_page=5&texts_per_page=5`;
+                  const pageData = await this.fetchJSON(pageUrl, true); // 프록시 사용
+                  const texts = (pageData.dataObjects || []).filter(o => o.dataType?.includes('Text')).map(o => o.description).join(' ');
+                  const images = (pageData.dataObjects || []).filter(o => o.dataType?.includes('StillImage') && o.eolMediaURL).map(o => ({ thumb: o.eolThumbnailURL || o.thumbnailURL || o.eolMediaURL, src: o.eolMediaURL, caption: o.title || 'EOL Image', credit: o.rightsHolder || o.license || 'EOL' }));
+                  return { type: 'eol', text: texts, images: images };
+               }
+               return { type: 'eol', text: '', images: [] };
+            } catch (proxyErr) {
+               console.warn('[EOL Proxy]', proxyErr);
+               return { type: 'eol', text: '', images: [] };
+            }
+          }
         },
       },
       
@@ -451,6 +498,7 @@
           promises.push(this.api.getMediaList(title, usedLang));
           if (document.getElementById('optGBIF').checked) promises.push(this.api.fetchGBIF(title));
           if (document.getElementById('optINat').checked) promises.push(this.api.fetchINat(title));
+          if (document.getElementById('optEOL').checked) promises.push(this.api.fetchEOL(title));
 
           const results = await Promise.allSettled(promises);
           
@@ -467,6 +515,9 @@
                         break;
                     case 'inat':
                         if (data.images.length > 0) this.ui.addSourcePanel('iNaturalist', ['관찰 사진이 갤러리에 추가되었습니다.']);
+                        break;
+                    case 'eol':
+                        if (data.text) this.ui.addSourcePanel('EOL (Encyclopedia of Life)', ['EOL의 설명과 이미지를 추가했습니다.']);
                         break;
                 }
             }
@@ -504,6 +555,16 @@
           if (e.key === 'Enter') document.getElementById('searchBtn').click();
         });
         document.getElementById('printBtn').addEventListener('click', () => window.print());
+        document.getElementById('proxyTest').addEventListener('click', async () => {
+          const proxyURL = document.getElementById('proxyURL').value.trim();
+          this.ui.toast('프록시를 테스트하는 중…');
+          try {
+            await fetch(`${proxyURL}https://example.org/`);
+            this.ui.toast('프록시 연결 성공!');
+          } catch {
+            this.ui.toast('프록시 연결 실패. 다른 주소를 시도해 보세요.');
+          }
+        });
       }
     };
 
