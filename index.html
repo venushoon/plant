@@ -8,8 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
-  <!-- 보안을 위해 DOMPurify 라이브러리 사용을 권장합니다. (주석 해제) -->
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <style>
     body { font-family: 'Pretendard', system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif; }
     .prose :where(p,li){line-height:1.8}
@@ -21,7 +20,6 @@
   </style>
 </head>
 <body class="min-h-screen bg-slate-50">
-  <!-- 헤더 -->
   <header class="bg-white sticky top-0 z-10 border-b">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-emerald-600">
@@ -37,7 +35,6 @@
     </div>
   </header>
 
-  <!-- 검색 & 설정 -->
   <section class="max-w-7xl mx-auto px-4 py-4">
     <div class="bg-white rounded-2xl shadow p-4 space-y-3">
       <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
@@ -64,12 +61,10 @@
     </div>
   </section>
 
-  <!-- 본문 -->
   <main class="max-w-7xl mx-auto px-4 pb-20">
     <div id="toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 max-w-md w-full z-20 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 px-4 py-3 shadow-lg"></div>
     <div id="status" class="mt-8 text-center text-slate-500"></div>
 
-    <!-- 요약 -->
     <section id="summary" class="hidden bg-white rounded-2xl shadow overflow-hidden">
       <div class="md:flex">
         <div class="md:w-1/3">
@@ -86,16 +81,13 @@
       </div>
     </section>
 
-    <!-- 위키백과 섹션 -->
     <section id="sections" class="mt-6 grid lg:grid-cols-3 gap-6 print-grid"></section>
 
-    <!-- 한살이 요약 -->
     <section id="growthWrap" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">한살이 과정 요약 (초등 눈높이)</h3>
       <div id="growthContent" class="bg-white rounded-2xl shadow p-5 text-slate-700 leading-7"></div>
     </section>
 
-    <!-- 단계 카드 -->
     <section id="stageCards" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">발아 → 성장 → 개화 → 결실</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -106,7 +98,6 @@
       </div>
     </section>
 
-    <!-- 세부 특징 -->
     <section id="detailWrap" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">세부 특징</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -121,10 +112,8 @@
       </div>
     </section>
 
-    <!-- 외부 소스 패널 -->
     <section id="sourcesWrap" class="mt-6 grid md:grid-cols-2 gap-4"></section>
 
-    <!-- 갤러리 -->
     <section id="galleryWrap" class="mt-6 hidden">
       <h3 class="text-lg font-semibold mb-3">관련 사진/이미지</h3>
       <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
@@ -280,11 +269,8 @@
             const contentDiv = document.createElement('div');
             contentDiv.className = "prose max-w-none";
             
-            if (window.DOMPurify) {
-              contentDiv.innerHTML = DOMPurify.sanitize(cleanHtml);
-            } else {
-              contentDiv.innerHTML = cleanHtml;
-            }
+            // DOMPurify를 사용하여 HTML을 안전하게 처리
+            contentDiv.innerHTML = DOMPurify.sanitize(cleanHtml);
             
             article.innerHTML = `<h4 class="font-semibold mb-2">${p.name}</h4>`;
             article.appendChild(contentDiv);
@@ -374,37 +360,59 @@
                 return true;
             }).slice(0, 8);
         },
+        // [개선된 함수] 정규식 대신 문맥 기반 키워드 분석
         analyzePlantFeatures(corpus){
-            const t = PlantExplorer.utils.norm(corpus);
-            const extract = (patterns) => {
-                const results = new Set();
-                for (const pattern of patterns) {
-                    const matches = t.matchAll(pattern);
-                    for (const match of matches) {
-                        let captured = match[1] || match[0];
-                        captured = captured.replace(/<[^>]+>/g, '').replace(/(?:씨앗|뿌리|잎|줄기|꽃|열매)은?는?/, '').trim();
-                        if (captured && captured.length > 1) {
-                            results.add(captured.replace(/[.]$/, ''));
+            const sentences = corpus.split(/[.!?。]/g);
+            const features = {
+                seed: new Set(), root: new Set(), leaf: new Set(), stem: new Set(),
+                flower: new Set(), bloom: new Set(), fruit: new Set(), pollination: new Set()
+            };
+
+            const keywords = {
+                seed: ['씨앗', '종자'], root: ['뿌리'], leaf: ['잎'], stem: ['줄기', '수피'],
+                flower: ['꽃', '꽃잎'], bloom: ['개화', '피는 시기'], fruit: ['열매', '과실'],
+                pollination: ['수분', '꽃가루받이']
+            };
+
+            const featureKeywords = {
+                leaf: ['마주나기', '어긋나기', '돌려나기', '홑잎', '겹잎', '바늘잎', '넓은잎', '타원형', '심장형', '톱니'],
+                stem: ['목질', '초본', '덩굴', '직립', '포복', '가시'],
+                root: ['원뿌리', '수염뿌리', '땅속줄기', '덩이줄기'],
+                flower: ['노란색', '흰색', '붉은색', '분홍색', '보라색', '두상화서', '총상화서'],
+                fruit: ['삭과', '수과', '핵과', '장과', '날개', '구과'],
+                pollination: ['곤충', '바람', '새', '자가 수분', '풍매', '충매', '조매'],
+                bloom: ['봄', '여름', '가을', '겨울', /([0-9]{1,2}월)/g]
+            };
+
+            for(const s of sentences) {
+                const sent = PlantExplorer.utils.norm(s);
+                if (sent.length < 5) continue;
+
+                for (const feat in keywords) {
+                    if (keywords[feat].some(k => sent.includes(k))) {
+                        // 관련 문장 전체를 추가하거나, 세부 키워드를 추출
+                        let added = false;
+                        if (featureKeywords[feat]) {
+                            for (const fKey of featureKeywords[feat]) {
+                                if (sent.match(fKey)) {
+                                    features[feat].add( (typeof fKey === 'string' ? fKey : sent.match(fKey)[0]) );
+                                    added = true;
+                                }
+                            }
+                        }
+                        if (!added && s.length > 10) { // 세부 키워드가 없으면, 의미 있는 문장 조각을 추가
+                           const shortSentence = s.trim().split(/\s+/).slice(0, 10).join(' ');
+                           features[feat].add(shortSentence + '...');
                         }
                     }
                 }
-                return Array.from(results);
-            };
+            }
 
-            const leafPatterns = [/잎은\s*([^\.다,]+)/g, /\b(타원형|달걀형|심장형|바늘잎|피침형|선형)이다/g, /잎\s*가장자리는\s*([^\.다,]+)/g, /\b잎이\s*(마주나기|어긋나기|돌려나기|모여나기)/g, /길이\s*([\d\s~-]+cm)의\s*바늘잎/g];
-            const stemPatterns = [/줄기는\s*([^\.다,]+)/g, /\b(목질|초본|덩굴성)이다/g, /높이\s*([\d\s~-]+m)/g, /수피는\s*([^\.다,]+)/g];
-            const flowerPatterns = [/꽃은\s*([^\.다,]+)/g, /\b(노란색|흰색|붉은색|분홍색|보라색)이다/g, /꽃잎은\s*(\d+장)/g, /\b(두상화서|총상화서|수상화서)이다/g];
-            const fruitPatterns = [/열매는\s*([^\.다,]+)/g, /\b(삭과|수과|핵과|장과)이다/g];
-            
             return {
-                seed: extract([/씨앗은\s*([^\.다,]+)/g]),
-                root: extract([/뿌리는\s*([^\.다,]+)/g, /\b(원뿌리|수염뿌리|땅속줄기)이다/g]),
-                leaf: extract(leafPatterns),
-                stem: extract(stemPatterns),
-                flower: extract(flowerPatterns),
-                bloom: extract([/(\d{1,2}[-~]\d{1,2}월)에\s*핀다/g, /(봄|여름|가을|겨울)에\s*꽃이\s*핀다/g]),
-                fruit: extract(fruitPatterns),
-                pollination: extract([/(충매화|풍매화)이다/g, /(곤충|바람)에\s*의해\s*수분된다/g])
+              seed: Array.from(features.seed), root: Array.from(features.root),
+              leaf: Array.from(features.leaf), stem: Array.from(features.stem),
+              flower: Array.from(features.flower), bloom: Array.from(features.bloom),
+              fruit: Array.from(features.fruit), pollination: Array.from(features.pollination)
             };
         },
         generateElementaryGrowth(corpus, feats){
